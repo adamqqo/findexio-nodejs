@@ -18,8 +18,12 @@ function fmtPct(x: number | null) {
   return `${(Number(x) * 100).toLocaleString('sk-SK', { maximumFractionDigits: 1 })}%`;
 }
 
-export default async function CompanyPage({ params }: { params: { ico: string } }) {
-  const rawIco = params.ico;
+export default async function CompanyPage({
+  params
+}: {
+  params: Promise<{ ico: string }>;
+}) {
+  const { ico: rawIco } = await params;
   const ico = (rawIco ?? '').toString().trim().replace(/[^0-9]/g, '');
   const [identity, grades, features] = await Promise.all([
     getCompanyIdentity(ico),
