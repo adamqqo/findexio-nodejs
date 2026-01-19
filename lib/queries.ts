@@ -1,5 +1,23 @@
 import { getPool } from './db';
 
+function normalizeIco(input: string): string {
+  return (input ?? '').toString().trim().replace(/[^0-9]/g, '');
+}
+
+function icoVariants(input: string): string[] {
+  const base = normalizeIco(input);
+  const out = new Set<string>();
+  if (base) out.add(base);
+
+  // Common variants:
+  // - Some sources store IČO as 8 digits with leading zeros
+  if (base.length > 0 && base.length < 8) out.add(base.padStart(8, '0'));
+  // - Some sources trim leading zeros
+  if (base.length === 8) out.add(base.replace(/^0+/, '') || '0');
+
+  return Array.from(out);
+}
+
 export type CompanyIdentity = {
   ico: string;
   name: string | null;
@@ -38,34 +56,40 @@ export type FeatureRow = {
 
 export async function getCompanyIdentity(ico: string): Promise<CompanyIdentity | null> {
   const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return null;
   const res = await pool.query(
     `
     SELECT ico, name, legal_form_name, status, address
     FROM core.rpo_all_orgs
-    WHERE ico = $1
+    WHERE ico = ANY($1::text[])
     LIMIT 1
     `,
-    [ico]
+    [variants]
   );
   return res.rows[0] ?? null;
 }
 
 export async function getCompanyGrades(ico: string): Promise<GradeRow[]> {
   const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return [];
   const res = await pool.query(
     `
     SELECT fiscal_year, period_end::text AS period_end, grade, score_total, reason
     FROM core.fin_health_grade
-    WHERE ico = $1 AND norm_period = 1
+    WHERE ico = ANY($1::text[]) AND norm_period = 1
     ORDER BY fiscal_year ASC
     `,
-    [ico]
+    [variants]
   );
   return res.rows;
 }
 
 export async function getCompanyLatestFeatures(ico: string): Promise<FeatureRow | null> {
   const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return null;
   const res = await pool.query(
     `
     SELECT
@@ -87,11 +111,11 @@ export async function getCompanyLatestFeatures(ico: string): Promise<FeatureRow 
       high_leverage_flag,
       loss_flag
     FROM core.fin_annual_features
-    WHERE ico = $1 AND norm_period = 1
+    WHERE ico = ANY($1::text[]) AND norm_period = 1
     ORDER BY fiscal_year DESC
     LIMIT 1
     `,
-    [ico]
+    [variants]
   );
   return res.rows[0] ?? null;
 }

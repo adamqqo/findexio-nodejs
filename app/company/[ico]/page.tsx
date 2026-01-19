@@ -19,7 +19,8 @@ function fmtPct(x: number | null) {
 }
 
 export default async function CompanyPage({ params }: { params: { ico: string } }) {
-  const ico = params.ico;
+  const rawIco = params.ico;
+  const ico = (rawIco ?? '').toString().trim().replace(/[^0-9]/g, '');
   const [identity, grades, features] = await Promise.all([
     getCompanyIdentity(ico),
     getCompanyGrades(ico),
@@ -30,7 +31,7 @@ export default async function CompanyPage({ params }: { params: { ico: string } 
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Firma nenájdená</h1>
-        <p className="text-sm text-zinc-600">Neexistuje záznam pre IČO: <span className="font-mono">{ico}</span></p>
+        <p className="text-sm text-zinc-600">Neexistuje záznam pre IČO: <span className="font-mono">{rawIco}</span></p>
         <Link href="/" className="text-sm">Späť na vyhľadávanie</Link>
       </div>
     );
@@ -70,13 +71,92 @@ export default async function CompanyPage({ params }: { params: { ico: string } 
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <MetricCard label="Current ratio" value={fmtRatio(features?.current_ratio ?? null)} sub="Krátkodobá likvidita" />
-        <MetricCard label="Debt ratio" value={fmtPct(features?.debt_ratio ?? null)} sub="Záväzky / aktíva" />
-        <MetricCard label="Equity ratio" value={fmtPct(features?.equity_ratio ?? null)} sub="Vlastné imanie / aktíva" />
-        <MetricCard label="ROA" value={fmtPct(features?.roa ?? null)} sub="Rentabilita aktív" />
-        <MetricCard label="ROE" value={fmtPct(features?.roe ?? null)} sub="Rentabilita vlastného imania" />
-        <MetricCard label="Net margin" value={fmtPct(features?.net_margin ?? null)} sub="Zisková marža" />
+      <section className="space-y-3">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-sm font-semibold">Kľúčové ukazovatele</h2>
+          <div className="text-xs text-zinc-500">
+            {features?.fiscal_year ? (
+              <span>
+                Posledný dostupný rok: <span className="font-medium text-zinc-700">{features.fiscal_year}</span>
+                {features.period_end ? <span> (k {features.period_end})</span> : null}
+              </span>
+            ) : (
+              '—'
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <MetricCard
+            label="Bežná likvidita (Current ratio)"
+            value={fmtRatio(features?.current_ratio ?? null)}
+            sub="Obežné aktíva / krátkodobé záväzky"
+            info="Hovorí, či firma vie z obežných aktív pokryť krátkodobé záväzky. Zjednodušene: čím vyššie, tým väčší likviditný vankúš. Príliš vysoké hodnoty môžu znamenať neefektívne viazanie kapitálu."
+          />
+          <MetricCard
+            label="Pohotová likvidita (Quick ratio)"
+            value={fmtRatio(features?.quick_ratio ?? null)}
+            sub="(Obežné aktíva – zásoby) / krátkodobé záväzky"
+            info="Prísnejšia verzia likvidity – odfiltruje zásoby, ktoré nemusia byť rýchlo speňažiteľné. Užitočné pri firmách, kde zásoby tvoria veľký podiel obežných aktív."
+          />
+          <MetricCard
+            label="Okamžitá likvidita (Cash ratio)"
+            value={fmtRatio(features?.cash_ratio ?? null)}
+            sub="Hotovosť a ekvivalenty / krátkodobé záväzky"
+            info="Najprísnejší ukazovateľ likvidity. Hovorí, do akej miery vie firma splatiť krátkodobé záväzky iba z hotovosti."
+          />
+
+          <MetricCard
+            label="Podiel vlastného imania (Equity ratio)"
+            value={fmtPct(features?.equity_ratio ?? null)}
+            sub="Vlastné imanie / aktíva"
+            info="Vyjadruje, aká časť majetku je financovaná vlastnými zdrojmi. Vyšší podiel zvyčajne znamená stabilnejšiu kapitálovú štruktúru (menšie riziko)."
+          />
+          <MetricCard
+            label="Zadlženosť (Debt ratio)"
+            value={fmtPct(features?.debt_ratio ?? null)}
+            sub="Záväzky / aktíva"
+            info="Podiel cudzieho kapitálu na aktívach. Vyššie hodnoty znamenajú vyššiu finančnú páku a citlivosť na pokles tržieb či rast úrokov."
+          />
+          <MetricCard
+            label="Dlh / vlastné imanie (Debt-to-equity)"
+            value={fmtRatio(features?.debt_to_equity ?? null)}
+            sub="Záväzky / vlastné imanie"
+            info="Ukazuje, koľko cudzieho kapitálu pripadá na 1 jednotku vlastného imania. Pri veľmi nízkom alebo zápornom vlastnom imaní môže byť interpretácia problematická."
+          />
+
+          <MetricCard
+            label="Rentabilita aktív (ROA)"
+            value={fmtPct(features?.roa ?? null)}
+            sub="Zisk / aktíva"
+            info="Meria efektivitu využitia majetku firmy na tvorbu zisku. Vyššie ROA znamená, že aktíva prinášajú viac zisku."
+          />
+          <MetricCard
+            label="Rentabilita vlastného imania (ROE)"
+            value={fmtPct(features?.roe ?? null)}
+            sub="Zisk / vlastné imanie"
+            info="Výnosnosť pre vlastníkov. ROE býva vyššie pri využívaní dlhu (finančná páka), ale to zároveň zvyšuje riziko."
+          />
+          <MetricCard
+            label="Čistá marža (Net margin)"
+            value={fmtPct(features?.net_margin ?? null)}
+            sub="Zisk / tržby"
+            info="Koľko percent z tržieb ostane firme ako čistý zisk. Pomáha porovnať ziskovosť medzi rokmi aj medzi firmami v odvetví."
+          />
+
+          <MetricCard
+            label="Obrat aktív (Asset turnover)"
+            value={fmtRatio(features?.asset_turnover ?? null)}
+            sub="Tržby / aktíva"
+            info="Ako intenzívne firma využíva aktíva na generovanie tržieb. Vyššie hodnoty znamenajú efektívnejšie využitie majetku."
+          />
+          <MetricCard
+            label="Úrokové krytie (Interest coverage)"
+            value={fmtRatio(features?.interest_coverage ?? null)}
+            sub="Prevádzkový výsledok / úrokové náklady"
+            info="Koľkokrát firma pokryje úrokové náklady zo svojho výsledku hospodárenia. Nízke hodnoty naznačujú, že aj menší pokles výkonu môže spôsobiť problém so splácaním úrokov."
+          />
+        </div>
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">

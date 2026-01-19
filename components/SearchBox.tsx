@@ -13,6 +13,10 @@ type SearchResult = {
   fiscal_year: number | null;
   grade: string | null;
   score_total: number | null;
+  min_year: number | null;
+  max_year: number | null;
+  years_count: number | null;
+  last_grades: (string | null)[] | null;
 };
 
 function useDebouncedValue(value: string, delayMs: number) {
@@ -83,7 +87,7 @@ export default function SearchBox() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-semibold text-zinc-900">
-                      <Link className="no-underline hover:underline" href={`/company/${r.ico}`}>
+                      <Link className="no-underline hover:underline" href={`/company/${encodeURIComponent((r.ico ?? '').trim())}`}>
                         {r.name ?? '(bez názvu)'}
                       </Link>
                     </div>
@@ -92,6 +96,12 @@ export default function SearchBox() {
                       {r.legal_form_name ? <span> • {r.legal_form_name}</span> : null}
                       {r.status ? <span> • {r.status}</span> : null}
                     </div>
+                    {r.min_year && r.max_year ? (
+                      <div className="mt-1 text-xs text-zinc-500">
+                        <span className="font-medium text-zinc-700">Vývoj:</span> {r.min_year}–{r.max_year}
+                        {r.years_count ? <span> ({r.years_count} období)</span> : null}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right text-xs text-zinc-500">
@@ -101,6 +111,20 @@ export default function SearchBox() {
                     <GradeBadge grade={r.grade} />
                   </div>
                 </div>
+
+                {r.last_grades && r.last_grades.length ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <div className="text-xs text-zinc-500">Posledné roky:</div>
+                    {r.last_grades
+                      .filter((g) => g !== null)
+                      .slice(0, 5)
+                      .map((g, idx) => (
+                        <div key={`${r.ico}-g-${idx}`}>
+                          <GradeBadge grade={g} />
+                        </div>
+                      ))}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
