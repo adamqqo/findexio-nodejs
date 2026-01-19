@@ -6,7 +6,7 @@ export default function HomePage() {
       <section className="space-y-3">
         <h1 className="text-3xl font-semibold tracking-tight">Findexio</h1>
         <p className="max-w-2xl text-sm text-zinc-600">
-          Vyhľadávanie a hodnotenie firiem na základe účtovných závierok. Zdrojom sú výkazy z RÚZ, prepočítané na agregáty, ratio a finálne skóre.
+          Vyhľadávanie a hodnotenie firiem na základe účtovných závierok.
         </p>
       </section>
 
@@ -15,7 +15,7 @@ export default function HomePage() {
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="text-xs font-medium text-zinc-500">Poznámka</div>
         <p className="mt-2 text-sm text-zinc-600">
-          Frontend je read-only. Dáta sa plnia z backend ETL pipeline do PostgreSQL schémy <span className="font-mono">core.*</span>.
+          Development in progress
         </p>
       </section>
     </div>
