@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { getCompanyGrades, getCompanyIdentity } from '@/lib/queries';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_req: Request, { params }: { params: { ico: string } }) {
-  const ico = params.ico;
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ ico: string }> }) {
+  const { ico } = await params;
   const identity = await getCompanyIdentity(ico);
   if (!identity) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
