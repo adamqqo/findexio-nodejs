@@ -7,6 +7,22 @@ function isMostlyNumeric(s: string) {
   return /^[0-9]+$/.test(s);
 }
 
+let _hasUnaccent: boolean | null = null;
+
+async function hasUnaccent() {
+  if (_hasUnaccent !== null) return _hasUnaccent;
+  try {
+    const pool = getPool();
+    const r = await pool.query(
+      "SELECT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'unaccent') AS ok;"
+    );
+    _hasUnaccent = Boolean(r.rows?.[0]?.ok);
+  } catch {
+    _hasUnaccent = false;
+  }
+  return _hasUnaccent;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = (searchParams.get('query') ?? '').trim();
@@ -19,7 +35,13 @@ export async function GET(req: Request) {
 
   const numeric = isMostlyNumeric(query);
   const icoLike = numeric ? `${query}%` : '0';
-  const nameLike = `%${query}%`;
+  // Better name matching: tolerate multiple spaces by turning them into wildcards.
+  const nameLike = `%${query.replace(/\s+/g, '%')}%`;
+
+  const useUnaccent = await hasUnaccent();
+  const namePredicate = useUnaccent
+    ? 'unaccent(o.name) ILIKE unaccent($2)'
+    : 'o.name ILIKE $2';
 
   const sql = `
     WITH grade_stats AS (
@@ -59,7 +81,7 @@ export async function GET(req: Request) {
       WHERE gg.ico = o.ico AND gg.norm_period = 1 AND gg.fiscal_year = g.fiscal_year
       LIMIT 1
     ) AS hscore ON TRUE
-    WHERE (${numeric ? 'o.ico LIKE $1' : 'FALSE'}) OR (o.name ILIKE $2)
+    WHERE (${numeric ? 'o.ico LIKE $1' : 'FALSE'}) OR (${namePredicate})
     ORDER BY o.name
     LIMIT 25
   `;
