@@ -7,9 +7,9 @@ export default function Header() {
       <div className="container flex items-center justify-between py-4">
         <Link href="/" className="no-underline">
           <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="Findexio" width={128} height={34} priority />
+            <Image src="/logo.png" alt="Findexio" width={256} height={68} priority />
             <div className="hidden sm:block text-xs text-zinc-500">
-              Firm health scoring from statutory statements
+              Prvý slovenský open-source finančný index
             </div>
           </div>
         </Link>
