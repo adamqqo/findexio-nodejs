@@ -81,6 +81,7 @@ export async function GET(req: Request) {
     ) AS hscore ON TRUE
     WHERE
       o.legal_form_code IN ('112', '121')
+      AND g.grade IS NOT NULL
       AND (
         (($1 <> '') AND o.ico LIKE $1)
         OR (${namePredicate})
