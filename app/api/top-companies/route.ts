@@ -1,3 +1,4 @@
+// app/api/top-companies/route.ts
 import { NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 
@@ -8,38 +9,56 @@ export async function GET() {
     const pool = getPool();
 
     const sql = `
-      WITH latest AS (
-        SELECT DISTINCT ON (lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0'))
-          lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0') AS ico8,
-          fiscal_year,
-          grade,
-          score_total
-        FROM core.fin_health_grade
-        WHERE norm_period = 1
-        ORDER BY lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0'), fiscal_year DESC
-      ),
-      orgs AS (
+      WITH grade_2024 AS (
         SELECT
-          lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0') AS ico8,
-          ico,
-          name,
-          legal_form_code,
-          legal_form_name
-        FROM core.rpo_all_orgs
-        WHERE legal_form_code IN ('112', '121')
+          g.ico,
+          g.fiscal_year,
+          g.grade,
+          g.score_total
+        FROM core.fin_health_grade g
+        WHERE g.norm_period = 1
+          AND g.fiscal_year = 2024
+      ),
+      feat_2024 AS (
+        SELECT
+          f.ico,
+          f.fiscal_year,
+          f.current_ratio,
+          f.debt_ratio,
+          f.roa,
+          f.roe,
+          f.net_margin,
+          COALESCE(f.negative_equity_flag, false) AS negative_equity_flag,
+          COALESCE(f.liquidity_breach_flag, false) AS liquidity_breach_flag,
+          COALESCE(f.high_leverage_flag, false) AS high_leverage_flag,
+          COALESCE(f.loss_flag, false) AS loss_flag
+        FROM core.fin_annual_features f
+        WHERE f.norm_period = 1
+          AND f.fiscal_year = 2024
       )
       SELECT
         o.ico,
         o.name,
         o.legal_form_name,
-        l.fiscal_year,
-        l.grade,
-        l.score_total
-      FROM latest l
-      JOIN orgs o ON o.ico8 = l.ico8
-      WHERE l.grade IS NOT NULL
+        g.fiscal_year,
+        g.grade,
+        g.score_total,
+        f.current_ratio,
+        f.debt_ratio,
+        f.roa,
+        f.roe,
+        f.net_margin,
+        (f.negative_equity_flag::int
+         + f.liquidity_breach_flag::int
+         + f.high_leverage_flag::int
+         + f.loss_flag::int) AS flags_count
+      FROM grade_2024 g
+      JOIN core.rpo_all_orgs o ON o.ico = g.ico
+      LEFT JOIN feat_2024 f ON f.ico = g.ico AND f.fiscal_year = g.fiscal_year
+      WHERE o.legal_form_code IN ('112','121')
+        AND g.grade IS NOT NULL
       ORDER BY
-        CASE l.grade
+        CASE g.grade
           WHEN 'A' THEN 1
           WHEN 'B' THEN 2
           WHEN 'C' THEN 3
@@ -48,7 +67,13 @@ export async function GET() {
           WHEN 'F' THEN 6
           ELSE 99
         END,
-        l.score_total DESC NULLS LAST,
+        g.score_total DESC NULLS LAST,
+        flags_count ASC,
+        f.roa DESC NULLS LAST,
+        f.roe DESC NULLS LAST,
+        f.net_margin DESC NULLS LAST,
+        f.current_ratio DESC NULLS LAST,
+        f.debt_ratio ASC NULLS LAST,
         o.name ASC
       LIMIT 10;
     `;
@@ -56,9 +81,6 @@ export async function GET() {
     const res = await pool.query(sql);
     return NextResponse.json({ items: res.rows ?? [] }, { status: 200 });
   } catch (e: any) {
-    return NextResponse.json(
-      { error: String(e?.message ?? e) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
   }
 }

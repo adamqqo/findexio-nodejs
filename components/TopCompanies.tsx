@@ -1,3 +1,4 @@
+// components/TopCompanies.tsx
 import Link from 'next/link';
 import GradeBadge from './GradeBadge';
 
@@ -8,11 +9,17 @@ export type TopCompanyRow = {
   fiscal_year: number | null;
   grade: string | null;
   score_total: number | null;
+
+  // optional (API ich môže posielať, UI ich zatiaľ nemusí zobrazovať)
+  current_ratio?: number | null;
+  debt_ratio?: number | null;
+  roa?: number | null;
+  roe?: number | null;
+  net_margin?: number | null;
+  flags_count?: number | null;
 };
 
-type Props = {
-  items: TopCompanyRow[];
-};
+type Props = { items: TopCompanyRow[] };
 
 export default function TopCompanies({ items }: Props) {
   if (!items || items.length === 0) return null;
@@ -23,10 +30,10 @@ export default function TopCompanies({ items }: Props) {
         <div>
           <div className="text-xs font-medium text-zinc-500">Ukážka</div>
           <h2 className="mt-1 text-lg font-semibold text-zinc-900">
-            Top firmy podľa známky
+            Top firmy podľa známky (2024)
           </h2>
           <p className="mt-1 text-sm text-zinc-600">
-            Zoradené podľa najnovšej známky (A najlepšia) a skóre.
+            Zoradené podľa známky, skóre a ukazovateľov (flags, ROA/ROE, marža, likvidita, zadlženie).
           </p>
         </div>
       </div>
@@ -38,25 +45,19 @@ export default function TopCompanies({ items }: Props) {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-semibold text-zinc-900">
-                    <Link
-                      className="no-underline hover:underline"
-                      href={`/company/${encodeURIComponent(r.ico)}`}
-                    >
+                    <Link className="no-underline hover:underline" href={`/company/${encodeURIComponent(r.ico)}`}>
                       {r.name ?? '(bez názvu)'}
                     </Link>
                   </div>
                   <div className="mt-1 text-xs text-zinc-500">
-                    <span className="font-medium text-zinc-700">IČO:</span>{' '}
-                    {r.ico}
-                    {r.legal_form_name ? ` • ${r.legal_form_name}` : null}
+                    <span className="font-medium text-zinc-700">IČO:</span> {r.ico}
+                    {r.legal_form_name ? <span> • {r.legal_form_name}</span> : null}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="text-right text-xs text-zinc-500">
-                    <div className="font-medium text-zinc-700">
-                      {r.fiscal_year ?? '—'}
-                    </div>
+                    <div className="font-medium text-zinc-700">{r.fiscal_year ?? '—'}</div>
                     <div>score {r.score_total ?? '—'}</div>
                   </div>
                   <GradeBadge grade={r.grade} />
