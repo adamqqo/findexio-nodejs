@@ -11,9 +11,9 @@ export default function HomePage() {
         </p>
       </section>
 
-      <TopCompaniesClient />
-
       <SearchBox />
+
+      <TopCompaniesClient />
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="text-xs font-medium text-zinc-500">Poznámka</div>
