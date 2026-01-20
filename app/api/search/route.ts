@@ -3,10 +3,6 @@ import { getPool } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-function isMostlyNumeric(s: string) {
-  return /^[0-9]+$/.test(s);
-}
-
 let _hasUnaccent: boolean | null = null;
 
 async function hasUnaccent() {
@@ -25,18 +21,18 @@ async function hasUnaccent() {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const query = (searchParams.get('query') ?? '').trim();
+  const rawQuery = (searchParams.get('query') ?? '').trim();
 
-  if (query.length < 2) {
+  if (rawQuery.length < 2) {
     return NextResponse.json({ items: [] });
   }
 
   const pool = getPool();
 
-  const numeric = isMostlyNumeric(query);
-  const icoLike = numeric ? `${query}%` : '0';
-  // Better name matching: tolerate multiple spaces by turning them into wildcards.
-  const nameLike = `%${query.replace(/\s+/g, '%')}%`;
+  // vždy pripravíme OBA parametre
+  const digitsOnly = rawQuery.replace(/\D/g, '');
+  const icoLike = digitsOnly.length >= 3 ? `${digitsOnly}%` : '%';
+  const nameLike = `%${rawQuery.replace(/\s+/g, '%')}%`;
 
   const useUnaccent = await hasUnaccent();
   const namePredicate = useUnaccent
@@ -78,12 +74,16 @@ export async function GET(req: Request) {
     LEFT JOIN LATERAL (
       SELECT score_total
       FROM core.fin_health_grade gg
-      WHERE gg.ico = o.ico AND gg.norm_period = 1 AND gg.fiscal_year = g.fiscal_year
+      WHERE gg.ico = o.ico
+        AND gg.norm_period = 1
+        AND gg.fiscal_year = g.fiscal_year
       LIMIT 1
     ) AS hscore ON TRUE
-    WHERE (${numeric ? 'o.ico LIKE $1' : 'FALSE'}) OR (${namePredicate})
+    WHERE
+      o.ico LIKE $1
+      OR ${namePredicate}
     ORDER BY o.name
-    LIMIT 25
+    LIMIT 25;
   `;
 
   const res = await pool.query(sql, [icoLike, nameLike]);
