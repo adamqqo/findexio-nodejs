@@ -9,14 +9,26 @@ export default async function HomePage() {
   try {
     const sql = `
       WITH latest AS (
-        SELECT DISTINCT ON (ico)
-          ico,
+        SELECT DISTINCT ON (lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0'))
+          lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0') AS ico8,
           fiscal_year,
           grade,
           score_total
         FROM core.fin_health_grade
         WHERE norm_period = 1
-        ORDER BY ico, fiscal_year DESC
+        ORDER BY lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0'), fiscal_year DESC
+      ),
+      orgs AS (
+        SELECT
+          lpad(regexp_replace(ico, '\\D', '', 'g'), 8, '0') AS ico8,
+          ico,
+          name,
+          legal_form_code,
+          legal_form_name,
+          status,
+          address
+        FROM core.rpo_all_orgs
+        WHERE legal_form_code IN ('112', '121')
       )
       SELECT
         o.ico,
@@ -26,7 +38,7 @@ export default async function HomePage() {
         l.grade,
         l.score_total
       FROM latest l
-      JOIN core.rpo_all_orgs o ON o.ico = l.ico
+      JOIN orgs o ON o.ico8 = l.ico8
       WHERE l.grade IS NOT NULL
       ORDER BY
         CASE l.grade
@@ -40,11 +52,11 @@ export default async function HomePage() {
         END,
         l.score_total DESC NULLS LAST,
         o.name ASC
-      LIMIT 10
+      LIMIT 10;
     `;
     const res = await pool.query(sql);
     top = (res.rows ?? []) as TopCompanyRow[];
-  } catch {
+  } catch (e) {
     // Non-blocking: homepage still renders with search.
     top = [];
   }

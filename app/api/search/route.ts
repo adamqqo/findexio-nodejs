@@ -29,9 +29,8 @@ export async function GET(req: Request) {
 
   const pool = getPool();
 
-  // digitsOnly použijeme len pre IČO prefix; keď je krátke/žiadne, ICO filter sa vypne
   const digitsOnly = rawQuery.replace(/\D/g, '');
-  const icoLike = digitsOnly.length >= 3 ? `${digitsOnly}%` : ''; // <-- kľúčová oprava
+  const icoLike = digitsOnly.length >= 3 ? `${digitsOnly}%` : '';
   const nameLike = `%${rawQuery.replace(/\s+/g, '%')}%`;
 
   const useUnaccent = await hasUnaccent();
@@ -58,6 +57,7 @@ export async function GET(req: Request) {
     SELECT
       o.ico,
       o.name,
+      o.legal_form_code,
       o.legal_form_name,
       o.status,
       o.address,
@@ -80,8 +80,11 @@ export async function GET(req: Request) {
       LIMIT 1
     ) AS hscore ON TRUE
     WHERE
-      (($1 <> '') AND o.ico LIKE $1)
-      OR (${namePredicate})
+      o.legal_form_code IN ('112', '121')
+      AND (
+        (($1 <> '') AND o.ico LIKE $1)
+        OR (${namePredicate})
+      )
     ORDER BY o.name
     LIMIT 25;
   `;
