@@ -20,22 +20,31 @@ export async function GET() {
           AND g.fiscal_year = 2024
       ),
       feat_2024 AS (
-        SELECT
-          f.ico,
-          f.fiscal_year,
-          f.current_ratio,
-          f.debt_ratio,
-          f.roa,
-          f.roe,
-          f.net_margin,
-          COALESCE(f.negative_equity_flag, false) AS negative_equity_flag,
-          COALESCE(f.liquidity_breach_flag, false) AS liquidity_breach_flag,
-          COALESCE(f.high_leverage_flag, false) AS high_leverage_flag,
-          COALESCE(f.loss_flag, false) AS loss_flag
-        FROM core.fin_annual_features f
-        WHERE f.norm_period = 1
-          AND f.fiscal_year = 2024
-      )
+  SELECT *
+  FROM (
+    SELECT
+      f.ico,
+      f.fiscal_year,
+      f.current_ratio,
+      f.debt_ratio,
+      f.roa,
+      f.roe,
+      f.net_margin,
+      COALESCE(f.negative_equity_flag, false) AS negative_equity_flag,
+      COALESCE(f.liquidity_breach_flag, false) AS liquidity_breach_flag,
+      COALESCE(f.high_leverage_flag, false) AS high_leverage_flag,
+      COALESCE(f.loss_flag, false) AS loss_flag,
+      ROW_NUMBER() OVER (
+        PARTITION BY f.ico, f.fiscal_year
+        ORDER BY f.period_end DESC NULLS LAST, f.report_id DESC
+      ) AS rn
+    FROM core.fin_annual_features f
+    WHERE f.norm_period = 1
+      AND f.fiscal_year = 2024
+  ) x
+  WHERE x.rn = 1
+)
+
       SELECT
         o.ico,
         o.name,
