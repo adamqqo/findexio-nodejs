@@ -18,9 +18,20 @@ type FeatureSeriesRow = {
   net_margin: number | null;
 };
 
+type AggregateRow = {
+  fiscal_year: number;
+  revenue: number | null;
+  net_income: number | null;
+  ebit: number | null;
+  total_assets: number | null;
+  equity: number | null;
+  interest_expense: number | null;
+};
+
 export default function CompanyCharts({ ico }: { ico: string }) {
   const [grades, setGrades] = useState<GradeRow[]>([]);
   const [features, setFeatures] = useState<FeatureSeriesRow[]>([]);
+  const [aggregates, setAggregates] = useState<AggregateRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +47,7 @@ export default function CompanyCharts({ ico }: { ico: string }) {
 
         setGrades((data.grades ?? []) as GradeRow[]);
         setFeatures((data.featuresSeries ?? []) as FeatureSeriesRow[]);
+        setAggregates((data.aggregates ?? []) as AggregateRow[]);
       } catch (e: any) {
         if (!cancelled) setError(String(e?.message ?? e));
       }
@@ -71,6 +83,32 @@ export default function CompanyCharts({ ico }: { ico: string }) {
     [features]
   );
 
+  const revenuePoints = useMemo(
+  () => aggregates.map(a => ({ x: a.fiscal_year, y: a.revenue })),
+  [aggregates]
+  );
+
+    const netIncomePoints = useMemo(
+  () => aggregates.map(a => ({ x: a.fiscal_year, y: a.net_income })),
+  [aggregates]
+  );
+
+    const ebitPoints = useMemo(
+  () => aggregates.map(a => ({ x: a.fiscal_year, y: a.ebit })),
+  [aggregates]
+  );
+
+    const assetsPoints = useMemo(
+  () => aggregates.map(a => ({ x: a.fiscal_year, y: a.total_assets })),
+  [aggregates]
+  );
+
+    const equityPoints = useMemo(
+  () => aggregates.map(a => ({ x: a.fiscal_year, y: a.equity })),
+  [aggregates]
+  );
+
+
   if (error) {
     return (
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -91,6 +129,33 @@ export default function CompanyCharts({ ico }: { ico: string }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <SimpleLineChart
+            title="Tržby"
+            subtitle="Ročné tržby (EUR)"
+            points={revenuePoints}
+            fmtY={(y) => `${(y / 1_000_000).toFixed(1)} mil. €`}
+        />
+
+        <SimpleLineChart
+          title="Čistý zisk"
+          subtitle="Net income (EUR)"
+          points={netIncomePoints}
+          fmtY={(y) => `${(y / 1_000_000).toFixed(1)} mil. €`}
+        />
+
+        <SimpleLineChart
+          title="EBIT"
+          subtitle="Prevádzkový zisk (EUR)"
+          points={ebitPoints}
+          fmtY={(y) => `${(y / 1_000_000).toFixed(1)} mil. €`}
+        />
+        <SimpleLineChart
+          title="Majetok vs. vlastné imanie"
+          subtitle="Aktíva a equity (EUR)"
+          points={assetsPoints}
+          fmtY={(y) => `${(y / 1_000_000).toFixed(1)} mil. €`}
+        />
+
         <SimpleLineChart
           title="Skóre"
           subtitle="Finálne hodnotenie v čase"

@@ -156,3 +156,43 @@ export async function getCompanyFeatureSeries(ico: string): Promise<FeatureSerie
 
   return res.rows;
 }
+
+export type AggregateSeriesRow = {
+  fiscal_year: number;
+  period_end: string | null;
+  revenue: number | null;
+  net_income: number | null;
+  ebit: number | null;
+  total_assets: number | null;
+  equity: number | null;
+  interest_expense: number | null;
+};
+
+export async function getCompanyAggregateSeries(
+  ico: string
+): Promise<AggregateSeriesRow[]> {
+  const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return [];
+
+  const res = await pool.query(
+    `
+    SELECT
+      fiscal_year,
+      period_end::text AS period_end,
+      revenue,
+      net_income,
+      ebit,
+      total_assets,
+      equity,
+      interest_expense
+    FROM core.fin_annual_aggregates
+    WHERE ico = ANY($1::text[])
+      AND norm_period = 1
+    ORDER BY fiscal_year ASC
+    `,
+    [variants]
+  );
+
+  return res.rows;
+}
