@@ -187,10 +187,6 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           fmtY={(y) => y.toFixed(2)}
         />
       </div>
-
-      <div className="text-xs text-zinc-500">
-        Pozn.: Absolútny „zisk“ (EUR) doplníme, ak vytiahneme časovú radu z agregátov (napr. tržby, EBITDA, výsledok hospodárenia).
-      </div>
     </section>
   );
 }
