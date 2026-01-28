@@ -119,3 +119,40 @@ export async function getCompanyLatestFeatures(ico: string): Promise<FeatureRow 
   );
   return res.rows[0] ?? null;
 }
+
+export type FeatureSeriesRow = {
+  fiscal_year: number;
+  period_end: string | null;
+
+  current_ratio: number | null;
+  debt_ratio: number | null;
+  roa: number | null;
+  roe: number | null;
+  net_margin: number | null;
+};
+
+export async function getCompanyFeatureSeries(ico: string): Promise<FeatureSeriesRow[]> {
+  const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return [];
+
+  const res = await pool.query(
+    `
+    SELECT
+      fiscal_year,
+      period_end::text AS period_end,
+      current_ratio,
+      debt_ratio,
+      roa,
+      roe,
+      net_margin
+    FROM core.fin_annual_features
+    WHERE ico = ANY($1::text[])
+      AND norm_period = 1
+    ORDER BY fiscal_year ASC
+    `,
+    [variants]
+  );
+
+  return res.rows;
+}

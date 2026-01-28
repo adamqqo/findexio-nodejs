@@ -2,6 +2,7 @@ import GradeBadge from '@/components/GradeBadge';
 import MetricCard from '@/components/MetricCard';
 import { getCompanyGrades, getCompanyIdentity, getCompanyLatestFeatures } from '@/lib/queries';
 import Link from 'next/link';
+import CompanyCharts from '@/components/CompanyCharts';
 
 function fmtNum(x: number | null, digits = 2) {
   if (x === null || typeof x === 'undefined') return '—';
@@ -198,6 +199,10 @@ export default async function CompanyPage({
         ) : (
           <p className="mt-3 text-sm text-zinc-600">Pre túto firmu zatiaľ nie je dostupné skóre.</p>
         )}
+      </section>
+
+      <section className="space-y-3">
+        <CompanyCharts ico={identity.ico} />
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
