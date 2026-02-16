@@ -196,3 +196,33 @@ export async function getCompanyAggregateSeries(
 
   return res.rows;
 }
+
+export type PdRow = {
+  fiscal_year: number;
+  pd_12m: number;
+  pd_pct: number | null;
+};
+
+export async function getCompanyPdSeries(ico: string): Promise<PdRow[]> {
+  const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return [];
+
+  const res = await pool.query(
+    `
+    SELECT fiscal_year, pd_12m, pd_pct
+    FROM core.ml_pd_predictions
+    WHERE ico = ANY($1::text[])
+      AND model_id = (
+        SELECT id
+        FROM core.ml_model_registry
+        ORDER BY created_at DESC
+        LIMIT 1
+      )
+    ORDER BY fiscal_year ASC
+    `,
+    [variants]
+  );
+
+  return res.rows;
+}

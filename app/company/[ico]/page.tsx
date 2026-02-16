@@ -3,6 +3,7 @@ import MetricCard from '@/components/MetricCard';
 import { getCompanyGrades, getCompanyIdentity, getCompanyLatestFeatures } from '@/lib/queries';
 import Link from 'next/link';
 import CompanyCharts from '@/components/CompanyCharts';
+import { getCompanyPdSeries } from '@/lib/queries';
 
 function fmtNum(x: number | null, digits = 2) {
   if (x === null || typeof x === 'undefined') return '—';
@@ -19,6 +20,14 @@ function fmtPct(x: number | null) {
   return `${(Number(x) * 100).toLocaleString('sk-SK', { maximumFractionDigits: 1 })}%`;
 }
 
+function riskLabel(pd: number) {
+  if (pd < 0.02) return { label: 'Veľmi nízke riziko', color: 'text-green-600' };
+  if (pd < 0.05) return { label: 'Nízke riziko', color: 'text-green-500' };
+  if (pd < 0.10) return { label: 'Stredné riziko', color: 'text-yellow-600' };
+  if (pd < 0.20) return { label: 'Zvýšené riziko', color: 'text-orange-600' };
+  return { label: 'Vysoké riziko', color: 'text-red-600' };
+}
+
 export default async function CompanyPage({
   params
 }: {
@@ -26,11 +35,13 @@ export default async function CompanyPage({
 }) {
   const { ico: rawIco } = await params;
   const ico = (rawIco ?? '').toString().trim().replace(/[^0-9]/g, '');
-  const [identity, grades, features] = await Promise.all([
-    getCompanyIdentity(ico),
-    getCompanyGrades(ico),
-    getCompanyLatestFeatures(ico)
-  ]);
+    const [identity, grades, features, pdSeries] = await Promise.all([
+      getCompanyIdentity(ico),
+      getCompanyGrades(ico),
+      getCompanyLatestFeatures(ico),
+      getCompanyPdSeries(ico)
+    ]);
+
 
   if (!identity) {
     return (
@@ -43,6 +54,7 @@ export default async function CompanyPage({
   }
 
   const latest = grades.length ? grades[grades.length - 1] : null;
+  const pdLatest = pdSeries.length ? pdSeries[pdSeries.length - 1] : null;
 
   const flags = features
     ? [
@@ -73,6 +85,17 @@ export default async function CompanyPage({
             </div>
             <GradeBadge grade={latest?.grade} />
           </div>
+         {pdLatest ? (
+            <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-right shadow-sm">
+              <div className="text-xs text-zinc-500">Pravdepodobnosť bankrotu (12M)</div>
+              <div className="text-sm font-semibold">
+                {(pdLatest.pd_12m * 100).toLocaleString('sk-SK', { maximumFractionDigits: 2 })} %
+              </div>
+              <div className={`text-xs font-medium ${riskLabel(pdLatest.pd_12m).color}`}>
+                {riskLabel(pdLatest.pd_12m).label}
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 

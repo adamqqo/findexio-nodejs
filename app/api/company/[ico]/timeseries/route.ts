@@ -3,8 +3,10 @@ import {
   getCompanyIdentity,
   getCompanyGrades,
   getCompanyFeatureSeries,
-  getCompanyAggregateSeries
+  getCompanyAggregateSeries,
+  getCompanyPdSeries
 } from '@/lib/queries';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -17,16 +19,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ ico: st
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const [grades, featuresSeries,aggregates] = await Promise.all([
-    getCompanyGrades(ico),
-    getCompanyFeatureSeries(ico),
-    getCompanyAggregateSeries(ico)
-  ]);
+    const [grades, featuresSeries, aggregates, pdSeries] = await Promise.all([
+      getCompanyGrades(ico),
+      getCompanyFeatureSeries(ico),
+      getCompanyAggregateSeries(ico),
+      getCompanyPdSeries(ico)
+    ]);
 
-  return NextResponse.json({
-    ico,
-    grades,
-    featuresSeries,
-    aggregates
-  });
+
+    return NextResponse.json({
+      ico,
+      grades,
+      featuresSeries,
+      aggregates,
+      pdSeries
+    });
 }
