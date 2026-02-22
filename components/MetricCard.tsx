@@ -2,17 +2,20 @@ export default function MetricCard({
   label,
   value,
   sub,
-  info
+  info,
+  tone
 }: {
   label: string;
   value: string;
   sub?: string;
+  tone?: 'good' | 'neutral' | 'bad';
   info?: string;
 }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="text-xs font-medium text-zinc-500">{label}</div>
+
         {info ? (
           <div className="group relative">
             <div
@@ -21,6 +24,7 @@ export default function MetricCard({
             >
               i
             </div>
+
             <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-72 rounded-xl border border-zinc-200 bg-white p-3 text-xs text-zinc-700 shadow-lg group-hover:block">
               <div className="font-medium text-zinc-900">Čo to znamená</div>
               <div className="mt-1 leading-relaxed text-zinc-700">{info}</div>
@@ -28,7 +32,19 @@ export default function MetricCard({
           </div>
         ) : null}
       </div>
-      <div className="mt-1 text-lg font-semibold text-zinc-900">{value}</div>
+
+      <div
+        className={`mt-1 text-lg font-semibold ${
+          tone === 'good'
+            ? 'text-green-600'
+            : tone === 'bad'
+            ? 'text-red-600'
+            : 'text-zinc-900'
+        }`}
+      >
+        {value}
+      </div>
+
       {sub ? <div className="mt-1 text-xs text-zinc-500">{sub}</div> : null}
     </div>
   );

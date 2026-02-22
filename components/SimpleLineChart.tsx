@@ -4,6 +4,15 @@ import React, { useMemo, useRef, useState } from 'react';
 
 type Point = { x: number; y: number | null };
 
+function autoUnit(maxAbs: number) {
+  const abs = Math.abs(maxAbs);
+
+  if (abs >= 1_000_000_000) return { div: 1_000_000_000, suffix: ' mld. €', digits: 2 };
+  if (abs >= 1_000_000) return { div: 1_000_000, suffix: ' mil. €', digits: 1 };
+  if (abs >= 1_000) return { div: 1_000, suffix: ' tis. €', digits: 1 };
+
+  return { div: 1, suffix: ' €', digits: 0 };
+}
 function niceExtent(values: number[]) {
   if (values.length === 0) return { min: 0, max: 1 };
   let min = Math.min(...values);
@@ -64,7 +73,8 @@ export default function SimpleLineChart({
 
   // IMPORTANT: extent is computed on RAW values (the line uses raw values)
   const { min: yMinRaw, max: yMaxRaw } = niceExtent(ysRaw);
-
+  const maxAbs = Math.max(Math.abs(yMinRaw), Math.abs(yMaxRaw));
+  const auto = autoUnit(maxAbs);
   const innerW = width - padL - padR;
   const innerH = height - padT - padB;
 
@@ -103,16 +113,13 @@ export default function SimpleLineChart({
   );
 
   const formatTick = (raw: number) => {
-    const scaled = raw / yScaleDivisor;
-    return `${formatNumberSK(scaled, yFractionDigits)}${ySuffix}`;
+    const scaled = raw / auto.div;
+    return `${formatNumberSK(scaled, auto.digits)}${auto.suffix}`;
   };
 
   const formatTooltip = (raw: number) => {
-    if (tooltipValueFormatter) return tooltipValueFormatter(raw);
-    const scaled = raw / yScaleDivisor;
-    // tooltip býva detailnejší ako tick
-    const digits = Math.max(yFractionDigits, 2);
-    return `${formatNumberSK(scaled, digits)}${ySuffix}`;
+    const scaled = raw / auto.div;
+    return `${formatNumberSK(scaled, Math.max(auto.digits, 2))}${auto.suffix}`;
   };
 
   // === Tooltip state ===

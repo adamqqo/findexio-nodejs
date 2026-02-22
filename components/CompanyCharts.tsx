@@ -235,18 +235,6 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           ySuffix=""
           yFractionDigits={2}
         />
-        <SimpleLineChart
-          title="Pravdepodobnosť bankrotu (12M)"
-          subtitle="Predikcia ML modelu"
-          points={pdPoints}
-          yScaleDivisor={1}
-          ySuffix="%"
-          yFractionDigits={1}
-          tooltipValueFormatter={(raw) =>
-            `${(raw * 100).toLocaleString('sk-SK', { maximumFractionDigits: 2 })} %`
-          }
-        />
-
       </div>
     </section>
   );
