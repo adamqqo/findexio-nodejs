@@ -55,19 +55,20 @@ export default function SimpleLineChart({
   yFractionDigits?: number;
   tooltipValueFormatter?: (rawY: number) => string;
 }) {
+  // IMPORTANT: keep everything in VIEWBOX units
   const width = 640;
   const padL = 56;
   const padR = 12;
   const padT = 12;
   const padB = 30;
 
+  const VB_W = width;
+  const VB_H = height;
+
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const xs = useMemo(() => points.map((p) => p.x), [points]);
-  const ysRaw = useMemo(
-    () => points.filter((p) => p.y !== null).map((p) => p.y as number),
-    [points]
-  );
+  const ysRaw = useMemo(() => points.filter((p) => p.y !== null).map((p) => p.y as number), [points]);
 
   const xMin = Math.min(...xs);
   const xMax = Math.max(...xs);
@@ -82,9 +83,7 @@ export default function SimpleLineChart({
 
   const yScale = (yRaw: number) =>
     padT +
-    (yMaxRaw === yMinRaw
-      ? innerH / 2
-      : (1 - (yRaw - yMinRaw) / (yMaxRaw - yMinRaw)) * innerH);
+    (yMaxRaw === yMinRaw ? innerH / 2 : (1 - (yRaw - yMinRaw) / (yMaxRaw - yMinRaw)) * innerH);
 
   const pathD = useMemo(() => {
     let d = '';
@@ -112,7 +111,6 @@ export default function SimpleLineChart({
     [yMinRaw, yMaxRaw]
   );
 
-  // ✅ Decide formatting mode:
   // If caller sets suffix/divisor explicitly (like % or score), do NOT use € autoUnit.
   const useCustomAxis = (ySuffix && ySuffix.trim() !== '') || yScaleDivisor !== 1;
 
@@ -135,7 +133,6 @@ export default function SimpleLineChart({
 
     if (useCustomAxis) {
       const scaled = raw / yScaleDivisor;
-      // tooltip can be a bit more precise than ticks
       return `${formatNumberSK(scaled, Math.max(yFractionDigits, 2))}${ySuffix}`;
     }
 
@@ -157,17 +154,20 @@ export default function SimpleLineChart({
     [points]
   );
 
-  function onMouseMove(e: React.MouseEvent) {
+  function onMouseMove(e: React.MouseEvent<SVGSVGElement>) {
     if (!svgRef.current || validPoints.length === 0) return;
 
     const rect = svgRef.current.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
+
+    // ✅ FIX: convert client pixels -> viewBox units (robust for responsive scaling + overflow scroll)
+    const mx = ((e.clientX - rect.left) / rect.width) * VB_W;
+    // const my = ((e.clientY - rect.top) / rect.height) * VB_H; // not needed
 
     let best = validPoints[0];
     let bestDx = Infinity;
 
     for (const p of validPoints) {
-      const px = xScale(p.x);
+      const px = xScale(p.x); // viewBox units
       const dx = Math.abs(px - mx);
       if (dx < bestDx) {
         bestDx = dx;
@@ -306,6 +306,10 @@ function TooltipFollowCursor({
 
     if (top < padding) {
       top = hover.mouseY + 14;
+    }
+
+    if (top + tooltipHeight > viewportHeight - padding) {
+      top = Math.max(padding, viewportHeight - padding - tooltipHeight);
     }
 
     setPos({ left, top });
