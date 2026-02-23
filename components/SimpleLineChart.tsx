@@ -39,24 +39,27 @@ export default function SimpleLineChart({
   points,
   height = 160,
 
-  // optional custom tooltip formatter
+  // Custom axis formatting (for ratios/score/%)
+  yScaleDivisor = 1,
+  ySuffix = '',
+  yFractionDigits = 1,
   tooltipValueFormatter
 }: {
   title: string;
   subtitle?: string;
   points: Point[];
   height?: number;
+
+  yScaleDivisor?: number;
+  ySuffix?: string;
+  yFractionDigits?: number;
   tooltipValueFormatter?: (rawY: number) => string;
 }) {
-  // IMPORTANT: keep everything in VIEWBOX units
   const width = 640;
   const padL = 56;
   const padR = 12;
   const padT = 12;
   const padB = 30;
-
-  const VB_W = width;
-  const VB_H = height;
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -70,8 +73,6 @@ export default function SimpleLineChart({
   const xMax = Math.max(...xs);
 
   const { min: yMinRaw, max: yMaxRaw } = niceExtent(ysRaw);
-  const maxAbs = Math.max(Math.abs(yMinRaw), Math.abs(yMaxRaw));
-  const auto = autoUnit(maxAbs);
 
   const innerW = width - padL - padR;
   const innerH = height - padT - padB;
@@ -80,7 +81,10 @@ export default function SimpleLineChart({
     padL + (xMax === xMin ? innerW / 2 : ((x - xMin) / (xMax - xMin)) * innerW);
 
   const yScale = (yRaw: number) =>
-    padT + (yMaxRaw === yMinRaw ? innerH / 2 : (1 - (yRaw - yMinRaw) / (yMaxRaw - yMinRaw)) * innerH);
+    padT +
+    (yMaxRaw === yMinRaw
+      ? innerH / 2
+      : (1 - (yRaw - yMinRaw) / (yMaxRaw - yMinRaw)) * innerH);
 
   const pathD = useMemo(() => {
     let d = '';
@@ -108,13 +112,33 @@ export default function SimpleLineChart({
     [yMinRaw, yMaxRaw]
   );
 
+  // ✅ Decide formatting mode:
+  // If caller sets suffix/divisor explicitly (like % or score), do NOT use € autoUnit.
+  const useCustomAxis = (ySuffix && ySuffix.trim() !== '') || yScaleDivisor !== 1;
+
+  const auto = useMemo(() => {
+    const maxAbs = Math.max(Math.abs(yMinRaw), Math.abs(yMaxRaw));
+    return autoUnit(maxAbs);
+  }, [yMinRaw, yMaxRaw]);
+
   const formatTick = (raw: number) => {
+    if (useCustomAxis) {
+      const scaled = raw / yScaleDivisor;
+      return `${formatNumberSK(scaled, yFractionDigits)}${ySuffix}`;
+    }
     const scaled = raw / auto.div;
     return `${formatNumberSK(scaled, auto.digits)}${auto.suffix}`;
   };
 
   const formatTooltip = (raw: number) => {
     if (tooltipValueFormatter) return tooltipValueFormatter(raw);
+
+    if (useCustomAxis) {
+      const scaled = raw / yScaleDivisor;
+      // tooltip can be a bit more precise than ticks
+      return `${formatNumberSK(scaled, Math.max(yFractionDigits, 2))}${ySuffix}`;
+    }
+
     const scaled = raw / auto.div;
     return `${formatNumberSK(scaled, Math.max(auto.digits, 2))}${auto.suffix}`;
   };
@@ -133,20 +157,17 @@ export default function SimpleLineChart({
     [points]
   );
 
-  function onMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+  function onMouseMove(e: React.MouseEvent) {
     if (!svgRef.current || validPoints.length === 0) return;
 
     const rect = svgRef.current.getBoundingClientRect();
-
-    // Convert client pixels to VIEWBOX units (robust for responsive scaling + overflow scroll)
-    const mx = ((e.clientX - rect.left) / rect.width) * VB_W;
-    // const my = ((e.clientY - rect.top) / rect.height) * VB_H; // not needed for nearest-x
+    const mx = e.clientX - rect.left;
 
     let best = validPoints[0];
     let bestDx = Infinity;
 
     for (const p of validPoints) {
-      const px = xScale(p.x); // viewBox units
+      const px = xScale(p.x);
       const dx = Math.abs(px - mx);
       if (dx < bestDx) {
         bestDx = dx;
@@ -172,7 +193,7 @@ export default function SimpleLineChart({
   }
 
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm relative">
+    <div className="relative rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm font-semibold text-zinc-900">{title}</div>
@@ -246,7 +267,6 @@ export default function SimpleLineChart({
         </div>
       )}
 
-      {/* Tooltip */}
       {hover ? <TooltipFollowCursor hover={hover} formatTooltip={formatTooltip} /> : null}
     </div>
   );
@@ -286,11 +306,6 @@ function TooltipFollowCursor({
 
     if (top < padding) {
       top = hover.mouseY + 14;
-    }
-
-    // if tooltip would go below viewport, clamp
-    if (top + tooltipHeight > viewportHeight - padding) {
-      top = Math.max(padding, viewportHeight - padding - tooltipHeight);
     }
 
     setPos({ left, top });
