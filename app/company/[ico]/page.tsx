@@ -48,12 +48,19 @@ function fmtProb(pd_12m: number) {
   })}%`;
 }
 
+function toNum(x: unknown): number | null {
+  if (x === null || typeof x === 'undefined') return null;
+  if (typeof x === 'number' && Number.isFinite(x)) return x;
+  if (typeof x === 'string' && x.trim() !== '') {
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 /* ---------------------------------------------------- */
 
-function evaluateRatio(
-  value: number | null,
-  type: string
-): 'good' | 'neutral' | 'bad' {
+function evaluateRatio(value: number | null, type: string): 'good' | 'neutral' | 'bad' {
   if (value === null || typeof value === 'undefined') return 'neutral';
 
   switch (type) {
@@ -112,16 +119,9 @@ function evaluateRatio(
   }
 }
 
-export default async function CompanyPage({
-  params
-}: {
-  params: Promise<{ ico: string }>;
-}) {
+export default async function CompanyPage({ params }: { params: Promise<{ ico: string }> }) {
   const { ico: rawIco } = await params;
-  const ico = (rawIco ?? '')
-    .toString()
-    .trim()
-    .replace(/[^0-9]/g, '');
+  const ico = (rawIco ?? '').toString().trim().replace(/[^0-9]/g, '');
 
   const [identity, grades, features, pdSeries] = await Promise.all([
     getCompanyIdentity(ico),
@@ -145,7 +145,11 @@ export default async function CompanyPage({
   }
 
   const latest = grades.length ? grades[grades.length - 1] : null;
-  const pdLatest = pdSeries.length ? pdSeries[pdSeries.length - 1] : null;
+
+  // pd_12m/pd_pct might be strings due to Postgres numeric -> pg behavior
+  const pdLatestRaw = pdSeries.length ? (pdSeries[pdSeries.length - 1] as any) : null;
+  const pd12 = pdLatestRaw ? toNum(pdLatestRaw.pd_12m) : null;
+  const pdPct = pdLatestRaw ? toNum(pdLatestRaw.pd_pct) : null;
 
   const flags = features
     ? [
@@ -162,9 +166,7 @@ export default async function CompanyPage({
       <section className="space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {identity.name ?? '(bez názvu)'}
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{identity.name ?? '(bez názvu)'}</h1>
             <div className="mt-1 text-sm text-zinc-600">
               <span className="font-medium text-zinc-700">IČO:</span>{' '}
               <span className="font-mono">{identity.ico}</span>
@@ -183,16 +185,26 @@ export default async function CompanyPage({
               <GradeBadge grade={latest?.grade} />
             </div>
 
-            {/* RISK BLOCK */}
-            {pdLatest && typeof pdLatest.pd_pct === 'number' ? (
+            {/* RISK BLOCK (always shows something if pdSeries exists) */}
+            {pdLatestRaw ? (
               <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
                 <div className="flex items-start justify-end gap-2">
                   <div>
                     <div className="text-xs text-zinc-500">Rizikový percentil</div>
-                    <div className="text-sm font-semibold">{fmtPercentile(pdLatest.pd_pct)} %</div>
-                    <div className={`text-xs font-medium ${riskLabelFromPct(pdLatest.pd_pct).color}`}>
-                      {riskLabelFromPct(pdLatest.pd_pct).label}
-                    </div>
+
+                    {typeof pdPct === 'number' ? (
+                      <>
+                        <div className="text-sm font-semibold">{fmtPercentile(pdPct)} %</div>
+                        <div className={`text-xs font-medium ${riskLabelFromPct(pdPct).color}`}>
+                          {riskLabelFromPct(pdPct).label}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-sm font-semibold">—</div>
+                        <div className="text-xs font-medium text-zinc-500">Percentil nie je dostupný</div>
+                      </>
+                    )}
                   </div>
 
                   <div className="group relative mt-0.5">
@@ -203,35 +215,51 @@ export default async function CompanyPage({
                     <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
                       <div className="font-medium text-zinc-900">Čo znamená percentil</div>
                       <div className="mt-1 leading-relaxed">
-                        Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku. Hodnota{' '}
-                        {fmtPercentile(pdLatest.pd_pct)} % znamená, že firma má vyššie modelové riziko než{' '}
-                        {fmtPercentile(pdLatest.pd_pct)} % ostatných firiem. Nejde o to, že firma má{' '}
-                        {fmtPercentile(pdLatest.pd_pct)} % pravdepodobnosť bankrotu, ale že patrí medzi najrizikovejšie
-                        subjekty podľa modelu.
+                        Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku.
+                        {typeof pdPct === 'number' ? (
+                          <>
+                            {' '}Hodnota {fmtPercentile(pdPct)} % znamená, že firma má vyššie modelové riziko než{' '}
+                            {fmtPercentile(pdPct)} % ostatných firiem. Nejde o to, že firma má {fmtPercentile(pdPct)} %
+                            pravdepodobnosť bankrotu, ale že patrí medzi najrizikovejšie subjekty podľa modelu.
+                          </>
+                        ) : (
+                          <> Percentil nie je pre túto firmu/rok dostupný.</>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-2 text-xs text-zinc-500">
-                  Patrí medzi{' '}
-                  <span className="font-medium text-zinc-700">
-                    {Math.max(1, 100 - fmtPercentile(pdLatest.pd_pct))} %
-                  </span>{' '}
-                  najrizikovejších firiem v danom roku.
-                </div>
+                {typeof pdPct === 'number' ? (
+                  <div className="mt-2 text-xs text-zinc-500">
+                    Patrí medzi{' '}
+                    <span className="font-medium text-zinc-700">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
+                    najrizikovejších firiem v danom roku.
+                  </div>
+                ) : null}
 
-                <div className="mt-2 text-xs text-zinc-500">
-                  Odhadovaná pravdepodobnosť bankrotu do 12 mesiacov:{' '}
-                  <span className="font-medium text-zinc-700">{fmtProb(pdLatest.pd_12m)}</span>
-                </div>
-
-                <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-                  Ide o štatistický odhad založený na historických dátach. Vzhľadom na nízku mieru bankrotov v populácii
-                  bývajú tieto hodnoty prirodzene nízke.
+                {typeof pd12 === 'number' ? (
+                  <>
+                    <div className="mt-2 text-xs text-zinc-500">
+                      Odhadovaná pravdepodobnosť bankrotu do 12 mesiacov:{' '}
+                      <span className="font-medium text-zinc-700">{fmtProb(pd12)}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                      Ide o štatistický odhad založený na historických dátach. Vzhľadom na nízku mieru bankrotov v populácii
+                      bývajú tieto hodnoty prirodzene nízke.
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ) : (
+              <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
+                <div className="text-xs text-zinc-500">Riziko bankrotu</div>
+                <div className="mt-1 text-sm font-semibold">Nedostupné</div>
+                <div className="mt-1 text-[11px] text-zinc-500">
+                  Pre túto firmu zatiaľ nemáme ML predikciu (alebo sa nenačítala).
                 </div>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </section>
