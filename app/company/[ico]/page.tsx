@@ -119,6 +119,34 @@ function evaluateRatio(value: number | null, type: string): 'good' | 'neutral' |
   }
 }
 
+/* ---------- NEW: status label mapping ---------- */
+
+function companyStatusBadge(status: string | null | undefined): { label: string; cls: string } | null {
+  const s = (status ?? '').toString().trim().toLowerCase();
+  if (!s) return null;
+
+  if (s === 'active') {
+    return {
+      label: 'Aktívna',
+      cls: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    };
+  }
+  if (s === 'terminated') {
+    return {
+      label: 'Zrušená',
+      cls: 'border-zinc-300 bg-zinc-100 text-zinc-700'
+    };
+  }
+
+  // fallback for other/unexpected statuses
+  return {
+    label: status ?? '—',
+    cls: 'border-zinc-200 bg-white text-zinc-700'
+  };
+}
+
+/* ------------------------------------------------ */
+
 export default async function CompanyPage({ params }: { params: Promise<{ ico: string }> }) {
   const { ico: rawIco } = await params;
   const ico = (rawIco ?? '').toString().trim().replace(/[^0-9]/g, '');
@@ -160,19 +188,30 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
       ]
     : [];
 
+  const statusBadge = companyStatusBadge(identity.status);
+
   return (
     <div className="space-y-8">
       {/* HEADER */}
       <section className="space-y-2">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{identity.name ?? '(bez názvu)'}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">{identity.name ?? '(bez názvu)'}</h1>
+
+              {statusBadge ? (
+                <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>
+                  {statusBadge.label}
+                </span>
+              ) : null}
+            </div>
+
             <div className="mt-1 text-sm text-zinc-600">
               <span className="font-medium text-zinc-700">IČO:</span>{' '}
               <span className="font-mono">{identity.ico}</span>
               {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
-              {identity.status ? <span> • {identity.status}</span> : null}
             </div>
+
             {identity.address ? <div className="mt-1 text-sm text-zinc-500">{identity.address}</div> : null}
           </div>
 
@@ -219,8 +258,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                         {typeof pdPct === 'number' ? (
                           <>
                             {' '}Hodnota {fmtPercentile(pdPct)} % znamená, že firma má vyššie modelové riziko než{' '}
-                            {fmtPercentile(pdPct)} % ostatných firiem. Nejde o to, že firma má {fmtPercentile(pdPct)} %
-                            pravdepodobnosť bankrotu, ale že patrí medzi najrizikovejšie subjekty podľa modelu.
+                            {fmtPercentile(pdPct)} % ostatných firiem. Nejde o to, že firma má {fmtPercentile(pdPct)} % pravdepodobnosť bankrotu,
+                            ale že patrí medzi najrizikovejšie subjekty podľa modelu.
                           </>
                         ) : (
                           <> Percentil nie je pre túto firmu/rok dostupný.</>

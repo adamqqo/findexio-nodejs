@@ -26,12 +26,6 @@ type FeatureSeriesRow = {
   net_margin: number | null;
 };
 
-type PdRow = {
-  fiscal_year: number;
-  pd_12m: number;
-  pd_pct: number | null;
-};
-
 type AggregateRow = {
   fiscal_year: number;
   revenue: number | null;
@@ -45,7 +39,6 @@ export default function CompanyCharts({ ico }: { ico: string }) {
   const [grades, setGrades] = useState<GradeRow[]>([]);
   const [features, setFeatures] = useState<FeatureSeriesRow[]>([]);
   const [aggregates, setAggregates] = useState<AggregateRow[]>([]);
-  const [pdSeries, setPdSeries] = useState<PdRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,7 +55,6 @@ export default function CompanyCharts({ ico }: { ico: string }) {
         setGrades((data.grades ?? []) as GradeRow[]);
         setFeatures((data.featuresSeries ?? []) as FeatureSeriesRow[]);
         setAggregates((data.aggregates ?? []) as AggregateRow[]);
-        setPdSeries((data.pdSeries ?? []) as PdRow[]);
       } catch (e: any) {
         if (!cancelled) setError(String(e?.message ?? e));
       }
@@ -74,30 +66,70 @@ export default function CompanyCharts({ ico }: { ico: string }) {
   }, [ico]);
 
   // --- Points ---
-  const revenuePoints = useMemo(() => aggregates.map((a) => ({ x: a.fiscal_year, y: a.revenue ?? null })), [aggregates]);
-  const netIncomePoints = useMemo(() => aggregates.map((a) => ({ x: a.fiscal_year, y: a.net_income ?? null })), [aggregates]);
-  const ebitPoints = useMemo(() => aggregates.map((a) => ({ x: a.fiscal_year, y: a.ebit ?? null })), [aggregates]);
-  const assetsPoints = useMemo(() => aggregates.map((a) => ({ x: a.fiscal_year, y: a.total_assets ?? null })), [aggregates]);
-  const equityAbsPoints = useMemo(() => aggregates.map((a) => ({ x: a.fiscal_year, y: a.equity ?? null })), [aggregates]);
+  const revenuePoints = useMemo(
+    () => aggregates.map((a) => ({ x: a.fiscal_year, y: a.revenue ?? null })),
+    [aggregates]
+  );
+  const netIncomePoints = useMemo(
+    () => aggregates.map((a) => ({ x: a.fiscal_year, y: a.net_income ?? null })),
+    [aggregates]
+  );
+  const ebitPoints = useMemo(
+    () => aggregates.map((a) => ({ x: a.fiscal_year, y: a.ebit ?? null })),
+    [aggregates]
+  );
+  const assetsPoints = useMemo(
+    () => aggregates.map((a) => ({ x: a.fiscal_year, y: a.total_assets ?? null })),
+    [aggregates]
+  );
+  const equityAbsPoints = useMemo(
+    () => aggregates.map((a) => ({ x: a.fiscal_year, y: a.equity ?? null })),
+    [aggregates]
+  );
 
-  const scorePoints = useMemo(() => grades.map((g) => ({ x: g.fiscal_year, y: g.score_total ?? null })), [grades]);
+  const scorePoints = useMemo(
+    () => grades.map((g) => ({ x: g.fiscal_year, y: g.score_total ?? null })),
+    [grades]
+  );
 
-  const marginPoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.net_margin ?? null })), [features]);
-  const roaPoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.roa ?? null })), [features]);
-  const roePoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.roe ?? null })), [features]);
-
-  const debtPoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.debt_ratio ?? null })), [features]);
-  const equityRatioPoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.equity_ratio ?? null })), [features]);
-  const liquidityPoints = useMemo(() => features.map((f) => ({ x: f.fiscal_year, y: f.current_ratio ?? null })), [features]);
-
-  const pdPoints = useMemo(() => pdSeries.map((p) => ({ x: p.fiscal_year, y: p.pd_12m ?? null })), [pdSeries]);
-  const pdPctPoints = useMemo(() => pdSeries.map((p) => ({ x: p.fiscal_year, y: p.pd_pct ?? null })), [pdSeries]);
+  const marginPoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.net_margin ?? null })),
+    [features]
+  );
+  const roaPoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.roa ?? null })),
+    [features]
+  );
+  const roePoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.roe ?? null })),
+    [features]
+  );
+  const debtPoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.debt_ratio ?? null })),
+    [features]
+  );
+  const equityRatioPoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.equity_ratio ?? null })),
+    [features]
+  );
+  const liquidityPoints = useMemo(
+    () => features.map((f) => ({ x: f.fiscal_year, y: f.current_ratio ?? null })),
+    [features]
+  );
 
   const hasAnyData =
     revenuePoints.some((p) => p.y !== null) ||
+    netIncomePoints.some((p) => p.y !== null) ||
+    ebitPoints.some((p) => p.y !== null) ||
+    assetsPoints.some((p) => p.y !== null) ||
+    equityAbsPoints.some((p) => p.y !== null) ||
     scorePoints.some((p) => p.y !== null) ||
     marginPoints.some((p) => p.y !== null) ||
-    pdPoints.some((p) => p.y !== null);
+    roaPoints.some((p) => p.y !== null) ||
+    roePoints.some((p) => p.y !== null) ||
+    debtPoints.some((p) => p.y !== null) ||
+    equityRatioPoints.some((p) => p.y !== null) ||
+    liquidityPoints.some((p) => p.y !== null);
 
   if (error) {
     return (
@@ -120,6 +152,9 @@ export default function CompanyCharts({ ico }: { ico: string }) {
     );
   }
 
+  // Percent ratios are stored as 0..1, so scale axis by 0.01 => show 0.18 as 18 (%)
+  const pctAxisDiv = 0.01;
+
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between">
@@ -128,7 +163,7 @@ export default function CompanyCharts({ ico }: { ico: string }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* --- ABSOLUTE EUR charts (use tooltip formatter only; SimpleLineChart auto-scales axis itself) --- */}
+        {/* --- ABSOLUTE EUR charts (axis auto-scales in SimpleLineChart; tooltip shows €) --- */}
         <SimpleLineChart
           title="Tržby"
           subtitle="Ročné tržby (EUR)"
@@ -169,14 +204,20 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           title="Skóre"
           subtitle="Finálne hodnotenie v čase"
           points={scorePoints}
+          yScaleDivisor={1}
+          ySuffix=""
+          yFractionDigits={0}
           tooltipValueFormatter={(raw) => `${Math.round(raw)}`}
         />
 
-        {/* --- Ratios / percentages (NO € scaling; tooltips show % where needed) --- */}
+        {/* --- Percent ratios (0..1) => show % on axis + tooltip --- */}
         <SimpleLineChart
           title="Čistá marža"
           subtitle="Zisk / tržby"
           points={marginPoints}
+          yScaleDivisor={pctAxisDiv}
+          ySuffix=" %"
+          yFractionDigits={1}
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw * 100, 2)} %`}
         />
 
@@ -184,6 +225,9 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           title="ROA"
           subtitle="Zisk / aktíva"
           points={roaPoints}
+          yScaleDivisor={pctAxisDiv}
+          ySuffix=" %"
+          yFractionDigits={1}
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw * 100, 2)} %`}
         />
 
@@ -191,6 +235,9 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           title="ROE"
           subtitle="Zisk / vlastné imanie"
           points={roePoints}
+          yScaleDivisor={pctAxisDiv}
+          ySuffix=" %"
+          yFractionDigits={1}
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw * 100, 2)} %`}
         />
 
@@ -198,6 +245,9 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           title="Zadlženosť (Debt ratio)"
           subtitle="Záväzky / aktíva"
           points={debtPoints}
+          yScaleDivisor={pctAxisDiv}
+          ySuffix=" %"
+          yFractionDigits={1}
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw * 100, 2)} %`}
         />
 
@@ -205,13 +255,20 @@ export default function CompanyCharts({ ico }: { ico: string }) {
           title="Podiel vlastného imania (Equity ratio)"
           subtitle="Vlastné imanie / aktíva"
           points={equityRatioPoints}
+          yScaleDivisor={pctAxisDiv}
+          ySuffix=" %"
+          yFractionDigits={1}
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw * 100, 2)} %`}
         />
 
+        {/* --- Liquidity ratio (unitless, not %): keep as plain number --- */}
         <SimpleLineChart
           title="Bežná likvidita (Current ratio)"
           subtitle="Obežné aktíva / krátkodobé záväzky"
           points={liquidityPoints}
+          yScaleDivisor={1}
+          ySuffix=""
+          yFractionDigits={2}
           tooltipValueFormatter={(raw) => formatNumberSK(raw, 2)}
         />
       </div>
