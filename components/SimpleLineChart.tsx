@@ -13,6 +13,7 @@ function autoUnit(maxAbs: number) {
 
   return { div: 1, suffix: ' €', digits: 0 };
 }
+
 function niceExtent(values: number[]) {
   if (values.length === 0) return { min: 0, max: 1 };
   let min = Math.min(...values);
@@ -38,27 +39,24 @@ export default function SimpleLineChart({
   points,
   height = 160,
 
-  // === NEW: unified axis scaling/labeling ===
-  yScaleDivisor = 1,                 // e.g. 1_000_000 for "mil. €"
-  ySuffix = '',                      // e.g. ' mil. €'
-  yFractionDigits = 1,               // tick precision after scaling
-  tooltipValueFormatter              // optional custom tooltip formatter
+  // optional custom tooltip formatter
+  tooltipValueFormatter
 }: {
   title: string;
   subtitle?: string;
   points: Point[];
   height?: number;
-
-  yScaleDivisor?: number;
-  ySuffix?: string;
-  yFractionDigits?: number;
   tooltipValueFormatter?: (rawY: number) => string;
 }) {
+  // IMPORTANT: keep everything in VIEWBOX units
   const width = 640;
   const padL = 56;
   const padR = 12;
   const padT = 12;
   const padB = 30;
+
+  const VB_W = width;
+  const VB_H = height;
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -71,10 +69,10 @@ export default function SimpleLineChart({
   const xMin = Math.min(...xs);
   const xMax = Math.max(...xs);
 
-  // IMPORTANT: extent is computed on RAW values (the line uses raw values)
   const { min: yMinRaw, max: yMaxRaw } = niceExtent(ysRaw);
   const maxAbs = Math.max(Math.abs(yMinRaw), Math.abs(yMaxRaw));
   const auto = autoUnit(maxAbs);
+
   const innerW = width - padL - padR;
   const innerH = height - padT - padB;
 
@@ -84,7 +82,6 @@ export default function SimpleLineChart({
   const yScale = (yRaw: number) =>
     padT + (yMaxRaw === yMinRaw ? innerH / 2 : (1 - (yRaw - yMinRaw) / (yMaxRaw - yMinRaw)) * innerH);
 
-  // Build path, skipping nulls
   const pathD = useMemo(() => {
     let d = '';
     let started = false;
@@ -105,7 +102,6 @@ export default function SimpleLineChart({
     return d;
   }, [points, xMin, xMax, yMinRaw, yMaxRaw]);
 
-  // Y ticks displayed in SCALED units, but positioned on RAW scale
   const yTicks = 4;
   const tickRawValues = useMemo(
     () => Array.from({ length: yTicks + 1 }, (_, i) => yMinRaw + ((yMaxRaw - yMinRaw) * i) / yTicks),
@@ -118,58 +114,58 @@ export default function SimpleLineChart({
   };
 
   const formatTooltip = (raw: number) => {
+    if (tooltipValueFormatter) return tooltipValueFormatter(raw);
     const scaled = raw / auto.div;
     return `${formatNumberSK(scaled, Math.max(auto.digits, 2))}${auto.suffix}`;
   };
 
-  // === Tooltip state ===
-    const [hover, setHover] = useState<{
-      year: number;
-      rawY: number;
-      cx: number;
-      cy: number;
-      mouseX: number;
-      mouseY: number;
-    } | null>(null);
-
-
+  const [hover, setHover] = useState<{
+    year: number;
+    rawY: number;
+    cx: number;
+    cy: number;
+    mouseX: number;
+    mouseY: number;
+  } | null>(null);
 
   const validPoints = useMemo(
     () => points.filter((p) => p.y !== null) as Array<{ x: number; y: number }>,
     [points]
   );
 
-    function onMouseMove(e: React.MouseEvent) {
-      if (!svgRef.current || validPoints.length === 0) return;
+  function onMouseMove(e: React.MouseEvent<SVGSVGElement>) {
+    if (!svgRef.current || validPoints.length === 0) return;
 
-      const rect = svgRef.current.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
+    const rect = svgRef.current.getBoundingClientRect();
 
-      let best = validPoints[0];
-      let bestDx = Infinity;
+    // Convert client pixels to VIEWBOX units (robust for responsive scaling + overflow scroll)
+    const mx = ((e.clientX - rect.left) / rect.width) * VB_W;
+    // const my = ((e.clientY - rect.top) / rect.height) * VB_H; // not needed for nearest-x
 
-      for (const p of validPoints) {
-        const px = xScale(p.x);
-        const dx = Math.abs(px - mx);
-        if (dx < bestDx) {
-          bestDx = dx;
-          best = p;
-        }
+    let best = validPoints[0];
+    let bestDx = Infinity;
+
+    for (const p of validPoints) {
+      const px = xScale(p.x); // viewBox units
+      const dx = Math.abs(px - mx);
+      if (dx < bestDx) {
+        bestDx = dx;
+        best = p;
       }
-
-      const cx = xScale(best.x);
-      const cy = yScale(best.y);
-
-      setHover({
-        year: best.x,
-        rawY: best.y,
-        cx,
-        cy,
-        mouseX: e.clientX,
-        mouseY: e.clientY
-      });
     }
 
+    const cx = xScale(best.x);
+    const cy = yScale(best.y);
+
+    setHover({
+      year: best.x,
+      rawY: best.y,
+      cx,
+      cy,
+      mouseX: e.clientX,
+      mouseY: e.clientY
+    });
+  }
 
   function onMouseLeave() {
     setHover(null);
@@ -251,13 +247,10 @@ export default function SimpleLineChart({
       )}
 
       {/* Tooltip */}
-      {hover ? (
-        <TooltipFollowCursor hover={hover} formatTooltip={formatTooltip} />
-      ) : null}
+      {hover ? <TooltipFollowCursor hover={hover} formatTooltip={formatTooltip} /> : null}
     </div>
   );
 }
-
 
 function TooltipFollowCursor({
   hover,
@@ -272,7 +265,6 @@ function TooltipFollowCursor({
   formatTooltip: (raw: number) => string;
 }) {
   const tooltipRef = React.useRef<HTMLDivElement | null>(null);
-
   const [pos, setPos] = React.useState({ left: 0, top: 0 });
 
   React.useEffect(() => {
@@ -296,6 +288,11 @@ function TooltipFollowCursor({
       top = hover.mouseY + 14;
     }
 
+    // if tooltip would go below viewport, clamp
+    if (top + tooltipHeight > viewportHeight - padding) {
+      top = Math.max(padding, viewportHeight - padding - tooltipHeight);
+    }
+
     setPos({ left, top });
   }, [hover]);
 
@@ -303,10 +300,7 @@ function TooltipFollowCursor({
     <div
       ref={tooltipRef}
       className="pointer-events-none fixed z-50 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs shadow-lg"
-      style={{
-        left: pos.left,
-        top: pos.top
-      }}
+      style={{ left: pos.left, top: pos.top }}
     >
       <div className="font-medium text-zinc-900">{hover.year}</div>
       <div className="text-zinc-600">{formatTooltip(hover.rawY)}</div>
