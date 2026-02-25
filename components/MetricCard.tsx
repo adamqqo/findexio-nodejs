@@ -3,13 +3,15 @@ export default function MetricCard({
   value,
   sub,
   info,
-  tone
+  tone,
+  hint
 }: {
   label: string;
   value: string;
   sub?: string;
   tone?: 'good' | 'neutral' | 'bad';
   info?: string;
+  hint?: string;
 }) {
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -46,6 +48,12 @@ export default function MetricCard({
       </div>
 
       {sub ? <div className="mt-1 text-xs text-zinc-500">{sub}</div> : null}
+
+      {hint ? (
+        <div className="mt-2 text-[11px] leading-relaxed text-zinc-500">
+          {hint}
+        </div>
+      ) : null}
     </div>
   );
 }

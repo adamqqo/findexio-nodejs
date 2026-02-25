@@ -59,65 +59,123 @@ function toNum(x: unknown): number | null {
 }
 
 /* ---------------------------------------------------- */
+/* ---------- THRESHOLDS (aligned with sources) -------- */
 
-function evaluateRatio(value: number | null, type: string): 'good' | 'neutral' | 'bad' {
+type Tone = 'good' | 'neutral' | 'bad';
+
+const SRC = {
+  KOTULIC_2018: 'Kotulič et al., 2018',
+  VERNIMMEN_2022: 'Vernimmen et al., 2022'
+} as const;
+
+function evaluateRatio(value: number | null, type: string): Tone {
   if (value === null || typeof value === 'undefined') return 'neutral';
 
   switch (type) {
+    // Current ratio: optimum 1.5–2.5; below 1 risky; above 2.5 not automatically "good"
     case 'current_ratio':
-      if (value >= 1.5) return 'good';
-      if (value < 1) return 'bad';
+      if (value < 1.0) return 'bad';
+      if (value >= 1.5 && value <= 2.5) return 'good';
       return 'neutral';
 
+    // Quick ratio: optimum 1–1.5; below 0.7 risky; above 1.5 may signal idle working capital
     case 'quick_ratio':
-      if (value >= 1.0) return 'good';
       if (value < 0.7) return 'bad';
+      if (value >= 1.0 && value <= 1.5) return 'good';
       return 'neutral';
 
+    // Cash ratio: optimum 0.2–0.8; very low is risky; above 0.8 may indicate inefficient cash hoarding
     case 'cash_ratio':
-      if (value >= 0.2) return 'good';
-      if (value < 0.05) return 'bad';
+      if (value < 0.1) return 'bad';
+      if (value >= 0.2 && value <= 0.8) return 'good';
       return 'neutral';
 
+    // Equity ratio: should not fall below 20–30%
     case 'equity_ratio':
-      if (value >= 0.4) return 'good';
       if (value < 0.2) return 'bad';
+      if (value >= 0.3) return 'good';
       return 'neutral';
 
+    // Debt ratio: recommended <= 50%; extreme 70–80%
     case 'debt_ratio':
-      if (value <= 0.5) return 'good';
       if (value > 0.8) return 'bad';
+      if (value <= 0.5) return 'good';
       return 'neutral';
 
+    // Debt-to-equity: <1 best; <2 acceptable; >2 risky
     case 'debt_to_equity':
-      if (value <= 1.5) return 'good';
-      if (value > 3) return 'bad';
+      if (value > 2.0) return 'bad';
+      if (value < 1.0) return 'good';
       return 'neutral';
 
+    // ROA: <8% bad; >15% above-average (sector dependent)
     case 'roa':
-      if (value >= 0.05) return 'good';
-      if (value < 0) return 'bad';
+      if (value < 0.08) return 'bad';
+      if (value > 0.15) return 'good';
       return 'neutral';
 
+    // ROE: <5% bad; >12% above-average (sector dependent)
     case 'roe':
-      if (value >= 0.1) return 'good';
-      if (value < 0) return 'bad';
+      if (value < 0.05) return 'bad';
+      if (value > 0.12) return 'good';
       return 'neutral';
 
+    // Net margin: recommended at least 10%; negative is bad
     case 'net_margin':
-      if (value >= 0.1) return 'good';
       if (value < 0) return 'bad';
+      if (value >= 0.1) return 'good';
       return 'neutral';
 
+    // Interest coverage: min 1; recommended 3–5
     case 'interest_coverage':
-      if (value >= 3) return 'good';
-      if (value < 1) return 'bad';
+      if (value < 1.0) return 'bad';
+      if (value >= 3.0) return 'good';
       return 'neutral';
 
     default:
       return 'neutral';
   }
 }
+
+type MetricMeta = {
+  hint: string;
+};
+
+const METRIC_META: Record<string, MetricMeta> = {
+  current_ratio: {
+    hint: `Optimum 1,5–2,5 (${SRC.KOTULIC_2018}). Nad optimum je často neutrálne: môže ísť o neefektívne viazaný kapitál v obežných aktívach.`
+  },
+  quick_ratio: {
+    hint: `Optimum 1,0–1,5 (${SRC.KOTULIC_2018}). Nad optimum býva neutrálne: prebytočná likvidita môže znamenať nevyužité zdroje.`
+  },
+  cash_ratio: {
+    hint: `Optimum 0,2–0,8 (${SRC.KOTULIC_2018}). Nad optimum je často neutrálne: firma môže držať „príliš veľa“ hotovosti namiesto investovania.`
+  },
+  equity_ratio: {
+    hint: `Odporúčané neklesnúť pod 20–30 % (${SRC.KOTULIC_2018}). Vyššie hodnoty sú zvyčajne priaznivé (väčšia finančná stabilita).`
+  },
+  debt_ratio: {
+    hint: `Odporúčané ≤ 50 %, za krajnú hranicu sa považuje ~70–80 % (${SRC.KOTULIC_2018}).`
+  },
+  debt_to_equity: {
+    hint: `Najlepšie < 1, za optimálne sa považuje < 2 (${SRC.KOTULIC_2018}). Nižšie hodnoty môžu byť neutrálne, ak firma zámerne využíva lacný dlh (závisí od stratégie).`
+  },
+  roa: {
+    hint: `< 8 % slabé, > 15 % nadpriemerné (${SRC.VERNIMMEN_2022}). Hodnotiť v kontexte odvetvia a nákladov kapitálu.`
+  },
+  roe: {
+    hint: `< 5 % slabé, > 12 % nadpriemerné (${SRC.VERNIMMEN_2022}). Hodnotiť v kontexte odvetvia a nákladov kapitálu.`
+  },
+  net_margin: {
+    hint: `Odporúča sa aspoň 10 % (${SRC.KOTULIC_2018}).`
+  },
+  interest_coverage: {
+    hint: `Minimum 1, odporúčaný interval 3–5 (${SRC.KOTULIC_2018}). Nad intervalom je neutrálne až pozitívne: firma má komfort pri obsluhe dlhu.`
+  },
+  asset_turnover: {
+    hint: `Bez univerzálnych hraníc — výrazne závisí od odvetvia. Zmysel má porovnanie v čase a voči konkurencii (${SRC.KOTULIC_2018}).`
+  }
+};
 
 /* ---------- NEW: status label mapping ---------- */
 
@@ -138,7 +196,6 @@ function companyStatusBadge(status: string | null | undefined): { label: string;
     };
   }
 
-  // fallback for other/unexpected statuses
   return {
     label: status ?? '—',
     cls: 'border-zinc-200 bg-white text-zinc-700'
@@ -174,7 +231,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
   const latest = grades.length ? grades[grades.length - 1] : null;
 
-  // pd_12m/pd_pct might be strings due to Postgres numeric -> pg behavior
   const pdLatestRaw = pdSeries.length ? (pdSeries[pdSeries.length - 1] as any) : null;
   const pd12 = pdLatestRaw ? toNum(pdLatestRaw.pd_12m) : null;
   const pdPct = pdLatestRaw ? toNum(pdLatestRaw.pd_pct) : null;
@@ -224,7 +280,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               <GradeBadge grade={latest?.grade} />
             </div>
 
-            {/* RISK BLOCK (always shows something if pdSeries exists) */}
+            {/* RISK BLOCK */}
             {pdLatestRaw ? (
               <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
                 <div className="flex items-start justify-end gap-2">
@@ -322,25 +378,30 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <MetricCard
-            label="Bežná likvidita (Current ratio)"
+            label="Celková likvidita (Current ratio)"
             value={fmtRatio(features?.current_ratio ?? null)}
             tone={evaluateRatio(features?.current_ratio ?? null, 'current_ratio')}
-            sub="Obežné aktíva / krátkodobé záväzky"
-            info="Hovorí, či firma vie z obežných aktív pokryť krátkodobé záväzky. Zjednodušene: čím vyššie, tým väčší likviditný vankúš."
+            sub="Krátkodobý majetok / krátkodobý cudzí kapitál"
+            info="Hovorí, či firma vie z obežných aktív pokryť krátkodobé záväzky."
+            hint={METRIC_META.current_ratio.hint}
           />
+
           <MetricCard
-            label="Pohotová likvidita (Quick ratio)"
+            label="Bežná likvidita (Quick ratio)"
             value={fmtRatio(features?.quick_ratio ?? null)}
             tone={evaluateRatio(features?.quick_ratio ?? null, 'quick_ratio')}
-            sub="(Obežné aktíva – zásoby) / krátkodobé záväzky"
-            info="Prísnejšia verzia likvidity – odfiltruje zásoby, ktoré nemusia byť rýchlo speňažiteľné."
+            sub="(Krátkodobý majetok – zásoby) / krátkodobý cudzí kapitál"
+            info="Prísnejšia verzia likvidity – odfiltruje zásoby."
+            hint={METRIC_META.quick_ratio.hint}
           />
+
           <MetricCard
-            label="Okamžitá likvidita (Cash ratio)"
+            label="Pohotová likvidita (Cash ratio)"
             value={fmtRatio(features?.cash_ratio ?? null)}
             tone={evaluateRatio(features?.cash_ratio ?? null, 'cash_ratio')}
-            sub="Hotovosť a ekvivalenty / krátkodobé záväzky"
-            info="Najprísnejší ukazovateľ likvidity. Hovorí, do akej miery vie firma splatiť krátkodobé záväzky iba z hotovosti."
+            sub="Finančné účty / krátkodobý cudzí kapitál"
+            info="Najprísnejší ukazovateľ likvidity – len z hotovosti."
+            hint={METRIC_META.cash_ratio.hint}
           />
 
           <MetricCard
@@ -348,21 +409,26 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             value={fmtPct(features?.equity_ratio ?? null)}
             tone={evaluateRatio(features?.equity_ratio ?? null, 'equity_ratio')}
             sub="Vlastné imanie / aktíva"
-            info="Vyjadruje, aká časť majetku je financovaná vlastnými zdrojmi."
+            info="Aká časť majetku je financovaná vlastnými zdrojmi."
+            hint={METRIC_META.equity_ratio.hint}
           />
+
           <MetricCard
             label="Zadlženosť (Debt ratio)"
             value={fmtPct(features?.debt_ratio ?? null)}
             tone={evaluateRatio(features?.debt_ratio ?? null, 'debt_ratio')}
             sub="Záväzky / aktíva"
-            info="Podiel cudzieho kapitálu na aktívach. Vyššie hodnoty znamenajú vyššiu finančnú páku."
+            info="Podiel cudzieho kapitálu na aktívach."
+            hint={METRIC_META.debt_ratio.hint}
           />
+
           <MetricCard
             label="Dlh / vlastné imanie (Debt-to-equity)"
             value={fmtRatio(features?.debt_to_equity ?? null)}
             tone={evaluateRatio(features?.debt_to_equity ?? null, 'debt_to_equity')}
             sub="Záväzky / vlastné imanie"
-            info="Ukazuje, koľko cudzieho kapitálu pripadá na 1 jednotku vlastného imania."
+            info="Koľko cudzieho kapitálu pripadá na 1 jednotku vlastného imania."
+            hint={METRIC_META.debt_to_equity.hint}
           />
 
           <MetricCard
@@ -370,21 +436,26 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             value={fmtPct(features?.roa ?? null)}
             tone={evaluateRatio(features?.roa ?? null, 'roa')}
             sub="Zisk / aktíva"
-            info="Meria efektivitu využitia majetku firmy na tvorbu zisku."
+            info="Efektivita využitia majetku na tvorbu zisku."
+            hint={METRIC_META.roa.hint}
           />
+
           <MetricCard
             label="Rentabilita vlastného imania (ROE)"
             value={fmtPct(features?.roe ?? null)}
             tone={evaluateRatio(features?.roe ?? null, 'roe')}
             sub="Zisk / vlastné imanie"
-            info="Výnosnosť pre vlastníkov. ROE býva vyššie pri využívaní dlhu (finančná páka), ale to zároveň zvyšuje riziko."
+            info="Výnosnosť pre vlastníkov."
+            hint={METRIC_META.roe.hint}
           />
+
           <MetricCard
             label="Čistá marža (Net margin)"
             value={fmtPct(features?.net_margin ?? null)}
             tone={evaluateRatio(features?.net_margin ?? null, 'net_margin')}
             sub="Zisk / tržby"
-            info="Koľko percent z tržieb ostane firme ako čistý zisk."
+            info="Koľko percent z tržieb ostane ako čistý zisk."
+            hint={METRIC_META.net_margin.hint}
           />
 
           <MetricCard
@@ -392,13 +463,16 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             value={fmtRatio(features?.asset_turnover ?? null)}
             sub="Tržby / aktíva"
             info="Ako intenzívne firma využíva aktíva na generovanie tržieb."
+            hint={METRIC_META.asset_turnover.hint}
           />
+
           <MetricCard
             label="Úrokové krytie (Interest coverage)"
             value={fmtRatio(features?.interest_coverage ?? null)}
             tone={evaluateRatio(features?.interest_coverage ?? null, 'interest_coverage')}
             sub="Prevádzkový výsledok / úrokové náklady"
-            info="Koľkokrát firma pokryje úrokové náklady zo svojho výsledku hospodárenia."
+            info="Koľkokrát firma pokryje úrokové náklady zo svojho výsledku."
+            hint={METRIC_META.interest_coverage.hint}
           />
         </div>
       </section>
