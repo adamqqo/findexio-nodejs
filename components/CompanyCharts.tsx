@@ -209,6 +209,7 @@ useEffect(() => {
           title="Tržby"
           subtitle="Ročné tržby (EUR)"
           points={revenuePoints}
+          autoUnit="eur"
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw, 0)} €`}
         />
 
@@ -216,6 +217,7 @@ useEffect(() => {
           title="Čistý zisk"
           subtitle="Net income (EUR)"
           points={netIncomePoints}
+          autoUnit="eur"
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw, 0)} €`}
         />
 
@@ -223,6 +225,7 @@ useEffect(() => {
           title="EBIT"
           subtitle="Prevádzkový zisk (EUR)"
           points={ebitPoints}
+          autoUnit="eur"
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw, 0)} €`}
         />
 
@@ -230,6 +233,7 @@ useEffect(() => {
           title="Aktíva"
           subtitle="Total assets (EUR)"
           points={assetsPoints}
+          autoUnit="eur"
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw, 0)} €`}
         />
 
@@ -237,6 +241,7 @@ useEffect(() => {
           title="Vlastné imanie"
           subtitle="Equity (EUR)"
           points={equityAbsPoints}
+          autoUnit="eur"
           tooltipValueFormatter={(raw) => `${formatNumberSK(raw, 0)} €`}
         />
 

@@ -126,9 +126,9 @@ export async function getCompanyLatestFeatures(ico: string): Promise<FeatureRow 
 export type FeatureSeriesRow = {
   fiscal_year: number;
   period_end: string | null;
-
   current_ratio: number | null;
   debt_ratio: number | null;
+  equity_ratio: number | null;
   roa: number | null;
   roe: number | null;
   net_margin: number | null;
@@ -147,6 +147,7 @@ export async function getCompanyFeatureSeries(ico: string): Promise<FeatureSerie
       current_ratio,
       debt_ratio,
       roa,
+      equity_ratio,
       roe,
       net_margin
     FROM core.fin_annual_features
