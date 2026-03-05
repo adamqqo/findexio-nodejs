@@ -1,5 +1,4 @@
 // noinspection SqlResolve
-import 'server-only';
 import { getPool } from './db';
 
 function normalizeIco(input: string): string {
