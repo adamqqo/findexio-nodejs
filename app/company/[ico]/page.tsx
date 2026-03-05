@@ -29,25 +29,6 @@ function fmtPct(x: number | null) {
   })}%`;
 }
 
-/* ---------- RISK LOGIC BASED ON PERCENTILE ---------- */
-
-function riskLabelFromPct(pd_pct: number) {
-  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-green-600' };
-  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-600' };
-  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-600' };
-  return { label: 'Vysoké riziko', color: 'text-red-600' };
-}
-
-function fmtPercentile(pd_pct: number) {
-  return Math.round(pd_pct * 100);
-}
-
-function fmtProb(pd_12m: number) {
-  return `${(pd_12m * 100).toLocaleString('sk-SK', {
-    maximumFractionDigits: 2
-  })}%`;
-}
-
 function toNum(x: unknown): number | null {
   if (x === null || typeof x === 'undefined') return null;
   if (typeof x === 'number' && Number.isFinite(x)) return x;
@@ -58,7 +39,68 @@ function toNum(x: unknown): number | null {
   return null;
 }
 
-/* ---------------------------------------------------- */
+/* ---------- RISK LOGIC BASED ON PERCENTILE (ML) ---------- */
+
+function riskLabelFromPct(pd_pct: number) {
+  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-green-600' };
+  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-600' };
+  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-600' };
+  return { label: 'Vysoké riziko', color: 'text-red-600' };
+}
+
+function fmtPercentile01(x: number) {
+  return Math.round(x * 100);
+}
+
+function fmtProb(pd_12m: number) {
+  return `${(pd_12m * 100).toLocaleString('sk-SK', {
+    maximumFractionDigits: 2
+  })}%`;
+}
+
+/* ---------- Slovak discriminant model (Gajdošíková et al.) ----------
+   Paper uses y_SK discriminant score, compare with 0:
+   - for Slovakia: y_SK > 0 => non-prosperous; y_SK < 0 => prosperous
+*/
+function skLabelFromScore(y: number) {
+  // Keep it simple + interpretable
+  if (y > 0) return { label: 'Riziková (ySK > 0)', color: 'text-red-600' };
+  return { label: 'Stabilnejšia (ySK < 0)', color: 'text-green-600' };
+}
+
+// model_sk_pct can be:
+// - either a percentile-like 0..1
+// - OR a raw discriminant score (ySK)
+// We try to present it safely.
+function interpretModelSk(modelSk: number) {
+  const looksLikePct = modelSk >= 0 && modelSk <= 1;
+  if (looksLikePct) {
+    // “percentile-style” display, keep labels similar to ML block
+    const p = modelSk;
+    const label =
+      p < 0.5
+        ? { label: 'Nižšie riziko', color: 'text-green-600' }
+        : p < 0.8
+        ? { label: 'Stredné riziko', color: 'text-yellow-600' }
+        : p < 0.95
+        ? { label: 'Zvýšené riziko', color: 'text-orange-600' }
+        : { label: 'Vysoké riziko', color: 'text-red-600' };
+
+    return {
+      mode: 'pct' as const,
+      pct: p,
+      label
+    };
+  }
+
+  // raw ySK
+  return {
+    mode: 'ysk' as const,
+    ysk: modelSk,
+    label: skLabelFromScore(modelSk)
+  };
+}
+
 /* ---------- THRESHOLDS (aligned with sources) -------- */
 
 type Tone = 'good' | 'neutral' | 'bad';
@@ -72,61 +114,51 @@ function evaluateRatio(value: number | null, type: string): Tone {
   if (value === null || typeof value === 'undefined') return 'neutral';
 
   switch (type) {
-    // Current ratio: optimum 1.5–2.5; below 1 risky; above 2.5 not automatically "good"
     case 'current_ratio':
       if (value < 1.0) return 'bad';
       if (value >= 1.5 && value <= 2.5) return 'good';
       return 'neutral';
 
-    // Quick ratio: optimum 1–1.5; below 0.7 risky; above 1.5 may signal idle working capital
     case 'quick_ratio':
       if (value < 0.7) return 'bad';
       if (value >= 1.0 && value <= 1.5) return 'good';
       return 'neutral';
 
-    // Cash ratio: optimum 0.2–0.8; very low is risky; above 0.8 may indicate inefficient cash hoarding
     case 'cash_ratio':
       if (value < 0.1) return 'bad';
       if (value >= 0.2 && value <= 0.8) return 'good';
       return 'neutral';
 
-    // Equity ratio: should not fall below 20–30%
     case 'equity_ratio':
       if (value < 0.2) return 'bad';
       if (value >= 0.3) return 'good';
       return 'neutral';
 
-    // Debt ratio: recommended <= 50%; extreme 70–80%
     case 'debt_ratio':
       if (value > 0.8) return 'bad';
       if (value <= 0.5) return 'good';
       return 'neutral';
 
-    // Debt-to-equity: <1 best; <2 acceptable; >2 risky
     case 'debt_to_equity':
       if (value > 2.0) return 'bad';
       if (value < 1.0) return 'good';
       return 'neutral';
 
-    // ROA: <8% bad; >15% above-average (sector dependent)
     case 'roa':
       if (value < 0.08) return 'bad';
       if (value > 0.15) return 'good';
       return 'neutral';
 
-    // ROE: <5% bad; >12% above-average (sector dependent)
     case 'roe':
       if (value < 0.05) return 'bad';
       if (value > 0.12) return 'good';
       return 'neutral';
 
-    // Net margin: recommended at least 10%; negative is bad
     case 'net_margin':
       if (value < 0) return 'bad';
       if (value >= 0.1) return 'good';
       return 'neutral';
 
-    // Interest coverage: min 1; recommended 3–5
     case 'interest_coverage':
       if (value < 1.0) return 'bad';
       if (value >= 3.0) return 'good';
@@ -137,9 +169,7 @@ function evaluateRatio(value: number | null, type: string): Tone {
   }
 }
 
-type MetricMeta = {
-  hint: string;
-};
+type MetricMeta = { hint: string };
 
 const METRIC_META: Record<string, MetricMeta> = {
   current_ratio: {
@@ -158,7 +188,7 @@ const METRIC_META: Record<string, MetricMeta> = {
     hint: `Odporúčané ≤ 50 %, za krajnú hranicu sa považuje ~70–80 % (${SRC.KOTULIC_2018}).`
   },
   debt_to_equity: {
-    hint: `Najlepšie < 1, za optimálne sa považuje < 2 (${SRC.KOTULIC_2018}). Nižšie hodnoty môžu byť neutrálne, ak firma zámerne využíva lacný dlh (závisí od stratégie).`
+    hint: `Najlepšie < 1, za optimálne sa považuje < 2 (${SRC.KOTULIC_2018}).`
   },
   roa: {
     hint: `< 8 % slabé, > 15 % nadpriemerné (${SRC.VERNIMMEN_2022}). Hodnotiť v kontexte odvetvia a nákladov kapitálu.`
@@ -177,29 +207,20 @@ const METRIC_META: Record<string, MetricMeta> = {
   }
 };
 
-/* ---------- NEW: status label mapping ---------- */
+/* ---------- status label mapping ---------- */
 
 function companyStatusBadge(status: string | null | undefined): { label: string; cls: string } | null {
   const s = (status ?? '').toString().trim().toLowerCase();
   if (!s) return null;
 
   if (s === 'active') {
-    return {
-      label: 'Aktívna',
-      cls: 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    };
+    return { label: 'Aktívna', cls: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
   }
   if (s === 'terminated') {
-    return {
-      label: 'Zrušená',
-      cls: 'border-zinc-300 bg-zinc-100 text-zinc-700'
-    };
+    return { label: 'Zrušená', cls: 'border-zinc-300 bg-zinc-100 text-zinc-700' };
   }
 
-  return {
-    label: status ?? '—',
-    cls: 'border-zinc-200 bg-white text-zinc-700'
-  };
+  return { label: status ?? '—', cls: 'border-zinc-200 bg-white text-zinc-700' };
 }
 
 /* ------------------------------------------------ */
@@ -231,9 +252,15 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
   const latest = grades.length ? grades[grades.length - 1] : null;
 
+  // ML PD
   const pdLatestRaw = pdSeries.length ? (pdSeries[pdSeries.length - 1] as any) : null;
   const pd12 = pdLatestRaw ? toNum(pdLatestRaw.pd_12m) : null;
   const pdPct = pdLatestRaw ? toNum(pdLatestRaw.pd_pct) : null;
+
+  // Slovak model metric (ensure your query returns it)
+  const modelSkRaw = features ? (features as any).model_sk_pct : null;
+  const modelSk = toNum(modelSkRaw);
+  const modelSkInterpreted = typeof modelSk === 'number' ? interpretModelSk(modelSk) : null;
 
   const flags = features
     ? [
@@ -248,119 +275,165 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
-      <section className="space-y-2">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{identity.name ?? '(bez názvu)'}</h1>
+      {/* “PAGE BACKPLATE” to visually separate sections */}
+      <div className="rounded-3xl bg-zinc-50 p-4 sm:p-6">
+        {/* HEADER */}
+        <section className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="truncate text-2xl font-semibold tracking-tight">{identity.name ?? '(bez názvu)'}</h1>
 
-              {statusBadge ? (
-                <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>
-                  {statusBadge.label}
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-1 text-sm text-zinc-600">
-              <span className="font-medium text-zinc-700">IČO:</span>{' '}
-              <span className="font-mono">{identity.ico}</span>
-              {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
-            </div>
-
-            {identity.address ? <div className="mt-1 text-sm text-zinc-500">{identity.address}</div> : null}
-          </div>
-
-          <div className="flex flex-col items-end gap-3">
-            <div className="flex items-center gap-3">
-              <div className="text-right text-xs text-zinc-500">
-                <div className="font-medium text-zinc-700">{latest?.fiscal_year ?? '—'}</div>
-                <div>score {latest?.score_total ?? '—'}</div>
+                {statusBadge ? (
+                  <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadge.cls}`}>
+                    {statusBadge.label}
+                  </span>
+                ) : null}
               </div>
-              <GradeBadge grade={latest?.grade} />
+
+              <div className="mt-1 text-sm text-zinc-600">
+                <span className="font-medium text-zinc-700">IČO:</span>{' '}
+                <span className="font-mono">{identity.ico}</span>
+                {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
+              </div>
+
+              {identity.address ? <div className="mt-1 text-sm text-zinc-500">{identity.address}</div> : null}
+
+              {/* Jump links (so user notices content below) */}
+              <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <a href="#metrics" className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-700">
+                  Ukazovatele
+                </a>
+                <a href="#charts" className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-700">
+                  Grafy
+                </a>
+                <a href="#scores" className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-700">
+                  Skóre
+                </a>
+                <a href="#flags" className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-zinc-700">
+                  Diagnostika
+                </a>
+              </div>
             </div>
 
-            {/* RISK BLOCK */}
-            {pdLatestRaw ? (
-              <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
-                <div className="flex items-start justify-end gap-2">
-                  <div>
-                    <div className="text-xs text-zinc-500">Rizikový percentil</div>
-
-                    {typeof pdPct === 'number' ? (
-                      <>
-                        <div className="text-sm font-semibold">{fmtPercentile(pdPct)} %</div>
-                        <div className={`text-xs font-medium ${riskLabelFromPct(pdPct).color}`}>
-                          {riskLabelFromPct(pdPct).label}
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm font-semibold">—</div>
-                        <div className="text-xs font-medium text-zinc-500">Percentil nie je dostupný</div>
-                      </>
-                    )}
+            {/* RIGHT SIDE: Summary cards */}
+            <div className="grid w-full gap-3 sm:w-[520px]">
+              {/* Grade card */}
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs text-zinc-500">
+                    <div className="font-medium text-zinc-700">{latest?.fiscal_year ?? '—'}</div>
+                    <div>score {latest?.score_total ?? '—'}</div>
                   </div>
+                  <GradeBadge grade={latest?.grade} />
+                </div>
+              </div>
 
-                  <div className="group relative mt-0.5">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-300 text-[11px] font-semibold text-zinc-600">
-                      i
+              {/* Risk cards (ML + Slovak model) */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* ML */}
+                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-xs text-zinc-500">Riziko (ML)</div>
+
+                      {typeof pdPct === 'number' ? (
+                        <>
+                          <div className="mt-1 text-sm font-semibold">{fmtPercentile01(pdPct)} %</div>
+                          <div className={`text-xs font-medium ${riskLabelFromPct(pdPct).color}`}>
+                            {riskLabelFromPct(pdPct).label}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="mt-1 text-sm font-semibold">—</div>
+                          <div className="text-xs font-medium text-zinc-500">Percentil nie je dostupný</div>
+                        </>
+                      )}
                     </div>
 
-                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
-                      <div className="font-medium text-zinc-900">Čo znamená percentil</div>
-                      <div className="mt-1 leading-relaxed">
-                        Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku.
-                        {typeof pdPct === 'number' ? (
-                          <>
-                            {' '}Hodnota {fmtPercentile(pdPct)} % znamená, že firma má vyššie modelové riziko než{' '}
-                            {fmtPercentile(pdPct)} % ostatných firiem. Nejde o to, že firma má {fmtPercentile(pdPct)} % pravdepodobnosť bankrotu,
-                            ale že patrí medzi najrizikovejšie subjekty podľa modelu.
-                          </>
-                        ) : (
-                          <> Percentil nie je pre túto firmu/rok dostupný.</>
-                        )}
+                    <div className="group relative mt-0.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-300 text-[11px] font-semibold text-zinc-600">
+                        i
+                      </div>
+
+                      <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
+                        <div className="font-medium text-zinc-900">Čo znamená ML percentil</div>
+                        <div className="mt-1 leading-relaxed">
+                          Percentil je relatívne poradie firmy medzi ostatnými. Vyššie % = firma patrí medzi rizikovejšie
+                          podľa modelu (nie je to priama pravdepodobnosť).
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {typeof pd12 === 'number' ? (
+                    <div className="mt-2 text-[11px] text-zinc-500">
+                      Odhad PD (12m): <span className="font-medium text-zinc-700">{fmtProb(pd12)}</span>
+                    </div>
+                  ) : null}
                 </div>
 
-                {typeof pdPct === 'number' ? (
-                  <div className="mt-2 text-xs text-zinc-500">
-                    Patrí medzi{' '}
-                    <span className="font-medium text-zinc-700">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
-                    najrizikovejších firiem v danom roku.
+                {/* Slovak discriminant model */}
+                <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="text-xs text-zinc-500">Riziko (SK model)</div>
+
+                      {modelSkInterpreted ? (
+                        modelSkInterpreted.mode === 'pct' ? (
+                          <>
+                            <div className="mt-1 text-sm font-semibold">{fmtPercentile01(modelSkInterpreted.pct)} %</div>
+                            <div className={`text-xs font-medium ${modelSkInterpreted.label.color}`}>
+                              {modelSkInterpreted.label.label}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="mt-1 text-sm font-semibold">{fmtNum(modelSkInterpreted.ysk, 3)}</div>
+                            <div className={`text-xs font-medium ${modelSkInterpreted.label.color}`}>
+                              {modelSkInterpreted.label.label}
+                            </div>
+                          </>
+                        )
+                      ) : (
+                        <>
+                          <div className="mt-1 text-sm font-semibold">—</div>
+                          <div className="text-xs font-medium text-zinc-500">Nedostupné</div>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="group relative mt-0.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-300 text-[11px] font-semibold text-zinc-600">
+                        i
+                      </div>
+
+                      <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
+                        <div className="font-medium text-zinc-900">Slovenský diskriminačný model</div>
+                        <div className="mt-1 leading-relaxed">
+                          Model používa skóre{' '}
+                          <span className="font-medium">ySK = −0,520 + 4,439X1 − 8,107X2 − 0,494X4 − 0,594X7 − 0,022X8 − 0,116X9 + 1,787X10</span>.
+                          Interpretácia je jednoduchá: pre Slovensko{' '}
+                          <span className="font-medium">ySK &gt; 0</span> signalizuje „non-prosperous“,{' '}
+                          <span className="font-medium">ySK &lt; 0</span> „prosperous“. (Gajdošíková et al., 2025)
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : null}
 
-                {typeof pd12 === 'number' ? (
-                  <>
-                    <div className="mt-2 text-xs text-zinc-500">
-                      Odhadovaná pravdepodobnosť bankrotu do 12 mesiacov:{' '}
-                      <span className="font-medium text-zinc-700">{fmtProb(pd12)}</span>
-                    </div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-                      Ide o štatistický odhad založený na historických dátach. Vzhľadom na nízku mieru bankrotov v populácii
-                      bývajú tieto hodnoty prirodzene nízke.
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            ) : (
-              <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
-                <div className="text-xs text-zinc-500">Riziko bankrotu</div>
-                <div className="mt-1 text-sm font-semibold">Nedostupné</div>
-                <div className="mt-1 text-[11px] text-zinc-500">
-                  Pre túto firmu zatiaľ nemáme ML predikciu (alebo sa nenačítala).
+                  <div className="mt-2 text-[11px] leading-relaxed text-zinc-500">
+                    Je to „benchmark“ model z literatúry: rýchly signál podľa dlhových ukazovateľov (nie ML).
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* METRIC CARDS */}
-      <section className="space-y-3">
+      <section id="metrics" className="space-y-3 scroll-mt-24">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="text-sm font-semibold">Kľúčové ukazovatele</h2>
           <div className="text-xs text-zinc-500">
@@ -477,8 +550,23 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
         </div>
       </section>
 
+      {/* CHARTS (give it a clear “panel” so it stands out) */}
+      <section id="charts" className="scroll-mt-24">
+        <div className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-3 flex items-end justify-between">
+            <div>
+              <h2 className="text-sm font-semibold">Grafy</h2>
+              <div className="mt-1 text-xs text-zinc-500">Vývoj ukazovateľov v čase</div>
+            </div>
+            <div className="text-xs text-zinc-500">norm_period = 1</div>
+          </div>
+
+          <CompanyCharts ico={identity.ico} />
+        </div>
+      </section>
+
       {/* SCORE TABLE */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <section id="scores" className="scroll-mt-24 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">Vývoj skóre</h2>
           <div className="text-xs text-zinc-500">norm_period = 1</div>
@@ -515,20 +603,15 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
         )}
       </section>
 
-      {/* CHARTS */}
-      <section className="space-y-3">
-        <CompanyCharts ico={identity.ico} />
-      </section>
-
       {/* FLAGS */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <section id="flags" className="scroll-mt-24 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Diagnostika (flagy)</h2>
         {features ? (
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {flags.map((f) => (
               <div
                 key={f.k}
-                className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+                className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm"
               >
                 <span className="text-zinc-700">{f.label}</span>
                 <span className={`text-xs font-medium ${f.v ? 'text-zinc-900' : 'text-zinc-500'}`}>
