@@ -54,6 +54,7 @@ export type FeatureRow = {
   liquidity_breach_flag: boolean | null;
   high_leverage_flag: boolean | null;
   loss_flag: boolean | null;
+  model_sk_pct: number | null;
 };
 
 export async function getCompanyIdentity(ico: string): Promise<CompanyIdentity | null> {
@@ -111,7 +112,8 @@ export async function getCompanyLatestFeatures(ico: string): Promise<FeatureRow 
       negative_equity_flag,
       liquidity_breach_flag,
       high_leverage_flag,
-      loss_flag
+      loss_flag,
+      model_sk_pct
     FROM core.fin_annual_features
     WHERE ico = ANY($1::text[]) AND norm_period = 1
     ORDER BY fiscal_year DESC
