@@ -250,12 +250,16 @@ export type BenchmarkMetricRow = {
   p75_value: number | null;
   percentile: number | null;
   n: number;
+
+  leader_ico: string | null;
+  leader_name: string | null;
+  leader_value: number | null;
 };
 
 export type CompanyBenchmarkResult = {
   context: BenchmarkContext;
   benchmark: {
-    geo_level: 'country' | 'kraj' | 'okres';
+    geo_level: 'country' | 'kraj';
     geo_value: string;
     sector_level: 'nace_division' | 'main_activity_code_id';
     sector_value: string;
@@ -295,7 +299,7 @@ export async function getCompanyBenchmark(
   ico: string,
   opts?: {
     fiscalYear?: number;
-    geoLevel?: 'country' | 'kraj' | 'okres';
+    geoLevel?: 'country' | 'kraj';
     sectorLevel?: 'nace_division' | 'main_activity_code_id';
   }
 ): Promise<CompanyBenchmarkResult | null> {
@@ -307,35 +311,333 @@ export async function getCompanyBenchmark(
   const geoLevel = opts?.geoLevel ?? 'kraj';
   const sectorLevel = opts?.sectorLevel ?? 'nace_division';
 
-  const geoValue =
-    geoLevel === 'okres'
-      ? ctx.okres
-      : geoLevel === 'kraj'
-      ? ctx.kraj
-      : 'Slovensko';
-
   const sectorValue =
     sectorLevel === 'main_activity_code_id'
       ? ctx.main_activity_code_id
       : ctx.nace_division;
 
   if (!sectorValue) return null;
-  if ((geoLevel === 'kraj' || geoLevel === 'okres') && !geoValue) return null;
 
-  const geoSql =
-    geoLevel === 'country'
-      ? 'TRUE'
-      : geoLevel === 'kraj'
-      ? 'kraj = $3'
-      : 'okres = $3';
-
-  const sectorSql =
+  const sectorColumn =
     sectorLevel === 'main_activity_code_id'
-      ? 'main_activity_code_id = $4'
-      : 'nace_division = $4';
+      ? 'main_activity_code_id'
+      : 'nace_division';
 
-  const res = await pool.query(
-    `
+  const sectorLabel =
+    sectorLevel === 'main_activity_code_id'
+      ? ctx.main_activity_code_name
+      : ctx.nace_division;
+
+  let geoValue = 'Slovensko';
+  let sql = '';
+
+  if (geoLevel === 'kraj') {
+    if (!ctx.kraj) return null;
+    geoValue = ctx.kraj;
+
+    sql = `
+      WITH company_row AS (
+        SELECT *
+        FROM core.mv_company_benchmark_facts
+        WHERE ico = $1
+          AND fiscal_year = $2
+        LIMIT 1
+      ),
+      grp AS (
+        SELECT g.*
+        FROM core.mv_company_benchmark_facts g
+        WHERE g.fiscal_year = $2
+          AND g.kraj = $3
+          AND g.${sectorColumn} = $4
+      ),
+      grp_n AS (
+        SELECT COUNT(*)::int AS n FROM grp
+      ),
+      metric_base AS (
+        SELECT
+          'current_ratio' AS metric,
+          (SELECT current_ratio FROM company_row) AS company_value,
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY current_ratio) AS p25_value,
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY current_ratio) AS median_value,
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY current_ratio) AS p75_value
+        FROM grp WHERE current_ratio IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'equity_ratio',
+          (SELECT equity_ratio FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY equity_ratio),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY equity_ratio),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY equity_ratio)
+        FROM grp WHERE equity_ratio IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'debt_ratio',
+          (SELECT debt_ratio FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY debt_ratio),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY debt_ratio),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY debt_ratio)
+        FROM grp WHERE debt_ratio IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'roa',
+          (SELECT roa FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY roa),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY roa),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY roa)
+        FROM grp WHERE roa IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'roe',
+          (SELECT roe FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY roe),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY roe),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY roe)
+        FROM grp WHERE roe IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'net_margin',
+          (SELECT net_margin FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY net_margin),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY net_margin),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY net_margin)
+        FROM grp WHERE net_margin IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'score_total',
+          (SELECT score_total FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY score_total),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY score_total),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY score_total)
+        FROM grp WHERE score_total IS NOT NULL
+
+        UNION ALL
+        SELECT
+          'pd_pct',
+          (SELECT pd_pct FROM company_row),
+          percentile_cont(0.25) WITHIN GROUP (ORDER BY pd_pct),
+          percentile_cont(0.50) WITHIN GROUP (ORDER BY pd_pct),
+          percentile_cont(0.75) WITHIN GROUP (ORDER BY pd_pct)
+        FROM grp WHERE pd_pct IS NOT NULL
+      ),
+      ranked AS (
+        SELECT
+          m.metric,
+          m.company_value,
+          m.p25_value,
+          m.median_value,
+          m.p75_value,
+          CASE
+            WHEN m.company_value IS NULL THEN NULL
+            ELSE (
+              SELECT COUNT(*)::float / NULLIF((SELECT n FROM grp_n), 0)
+              FROM grp
+              WHERE CASE m.metric
+                WHEN 'current_ratio' THEN current_ratio <= m.company_value
+                WHEN 'equity_ratio' THEN equity_ratio <= m.company_value
+                WHEN 'debt_ratio' THEN debt_ratio <= m.company_value
+                WHEN 'roa' THEN roa <= m.company_value
+                WHEN 'roe' THEN roe <= m.company_value
+                WHEN 'net_margin' THEN net_margin <= m.company_value
+                WHEN 'score_total' THEN score_total <= m.company_value
+                WHEN 'pd_pct' THEN pd_pct <= m.company_value
+              END
+            )
+          END AS percentile,
+          (SELECT n FROM grp_n) AS n
+        FROM metric_base m
+      )
+      SELECT
+        r.*,
+
+        -- leaders
+        CASE r.metric
+          WHEN 'current_ratio' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.current_ratio IS NOT NULL
+            ORDER BY g.current_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'equity_ratio' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.equity_ratio IS NOT NULL
+            ORDER BY g.equity_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'debt_ratio' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.debt_ratio IS NOT NULL
+            ORDER BY g.debt_ratio ASC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roa' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.roa IS NOT NULL
+            ORDER BY g.roa DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roe' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.roe IS NOT NULL
+            ORDER BY g.roe DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'net_margin' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.net_margin IS NOT NULL
+            ORDER BY g.net_margin DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'score_total' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.score_total IS NOT NULL
+            ORDER BY g.score_total DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'pd_pct' THEN (
+            SELECT g.ico FROM grp g
+            WHERE g.pd_pct IS NOT NULL
+            ORDER BY g.pd_pct ASC NULLS LAST
+            LIMIT 1
+          )
+        END AS leader_ico,
+
+        CASE r.metric
+          WHEN 'current_ratio' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.current_ratio IS NOT NULL
+            ORDER BY g.current_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'equity_ratio' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.equity_ratio IS NOT NULL
+            ORDER BY g.equity_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'debt_ratio' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.debt_ratio IS NOT NULL
+            ORDER BY g.debt_ratio ASC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roa' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.roa IS NOT NULL
+            ORDER BY g.roa DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roe' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.roe IS NOT NULL
+            ORDER BY g.roe DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'net_margin' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.net_margin IS NOT NULL
+            ORDER BY g.net_margin DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'score_total' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.score_total IS NOT NULL
+            ORDER BY g.score_total DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'pd_pct' THEN (
+            SELECT o.name FROM grp g
+            JOIN core.rpo_all_orgs o ON o.ico = g.ico
+            WHERE g.pd_pct IS NOT NULL
+            ORDER BY g.pd_pct ASC NULLS LAST
+            LIMIT 1
+          )
+        END AS leader_name,
+
+        CASE r.metric
+          WHEN 'current_ratio' THEN (
+            SELECT g.current_ratio FROM grp g
+            WHERE g.current_ratio IS NOT NULL
+            ORDER BY g.current_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'equity_ratio' THEN (
+            SELECT g.equity_ratio FROM grp g
+            WHERE g.equity_ratio IS NOT NULL
+            ORDER BY g.equity_ratio DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'debt_ratio' THEN (
+            SELECT g.debt_ratio FROM grp g
+            WHERE g.debt_ratio IS NOT NULL
+            ORDER BY g.debt_ratio ASC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roa' THEN (
+            SELECT g.roa FROM grp g
+            WHERE g.roa IS NOT NULL
+            ORDER BY g.roa DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'roe' THEN (
+            SELECT g.roe FROM grp g
+            WHERE g.roe IS NOT NULL
+            ORDER BY g.roe DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'net_margin' THEN (
+            SELECT g.net_margin FROM grp g
+            WHERE g.net_margin IS NOT NULL
+            ORDER BY g.net_margin DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'score_total' THEN (
+            SELECT g.score_total FROM grp g
+            WHERE g.score_total IS NOT NULL
+            ORDER BY g.score_total DESC NULLS LAST
+            LIMIT 1
+          )
+          WHEN 'pd_pct' THEN (
+            SELECT g.pd_pct FROM grp g
+            WHERE g.pd_pct IS NOT NULL
+            ORDER BY g.pd_pct ASC NULLS LAST
+            LIMIT 1
+          )
+        END AS leader_value
+
+      FROM ranked r
+    `;
+
+    const res = await pool.query(sql, [ctx.ico, fiscalYear, ctx.kraj, sectorValue]);
+
+    return {
+      context: ctx,
+      benchmark: {
+        geo_level: 'kraj',
+        geo_value: ctx.kraj,
+        sector_level: sectorLevel,
+        sector_value: sectorValue,
+        sector_label: sectorLabel,
+        n: res.rows[0]?.n ?? 0
+      },
+      metrics: res.rows
+    };
+  }
+
+  // country branch
+  sql = `
     WITH company_row AS (
       SELECT *
       FROM core.mv_company_benchmark_facts
@@ -344,16 +646,15 @@ export async function getCompanyBenchmark(
       LIMIT 1
     ),
     grp AS (
-      SELECT *
-      FROM core.mv_company_benchmark_facts
-      WHERE fiscal_year = $2
-        AND ${geoSql}
-        AND ${sectorSql}
+      SELECT g.*
+      FROM core.mv_company_benchmark_facts g
+      WHERE g.fiscal_year = $2
+        AND g.${sectorColumn} = $3
     ),
     grp_n AS (
       SELECT COUNT(*)::int AS n FROM grp
     ),
-    metrics AS (
+    metric_base AS (
       SELECT
         'current_ratio' AS metric,
         (SELECT current_ratio FROM company_row) AS company_value,
@@ -363,63 +664,49 @@ export async function getCompanyBenchmark(
       FROM grp WHERE current_ratio IS NOT NULL
 
       UNION ALL
-      SELECT
-        'equity_ratio',
-        (SELECT equity_ratio FROM company_row),
+      SELECT 'equity_ratio', (SELECT equity_ratio FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY equity_ratio),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY equity_ratio),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY equity_ratio)
       FROM grp WHERE equity_ratio IS NOT NULL
 
       UNION ALL
-      SELECT
-        'debt_ratio',
-        (SELECT debt_ratio FROM company_row),
+      SELECT 'debt_ratio', (SELECT debt_ratio FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY debt_ratio),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY debt_ratio),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY debt_ratio)
       FROM grp WHERE debt_ratio IS NOT NULL
 
       UNION ALL
-      SELECT
-        'roa',
-        (SELECT roa FROM company_row),
+      SELECT 'roa', (SELECT roa FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY roa),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY roa),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY roa)
       FROM grp WHERE roa IS NOT NULL
 
       UNION ALL
-      SELECT
-        'roe',
-        (SELECT roe FROM company_row),
+      SELECT 'roe', (SELECT roe FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY roe),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY roe),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY roe)
       FROM grp WHERE roe IS NOT NULL
 
       UNION ALL
-      SELECT
-        'net_margin',
-        (SELECT net_margin FROM company_row),
+      SELECT 'net_margin', (SELECT net_margin FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY net_margin),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY net_margin),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY net_margin)
       FROM grp WHERE net_margin IS NOT NULL
 
       UNION ALL
-      SELECT
-        'score_total',
-        (SELECT score_total FROM company_row),
+      SELECT 'score_total', (SELECT score_total FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY score_total),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY score_total),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY score_total)
       FROM grp WHERE score_total IS NOT NULL
 
       UNION ALL
-      SELECT
-        'pd_pct',
-        (SELECT pd_pct FROM company_row),
+      SELECT 'pd_pct', (SELECT pd_pct FROM company_row),
         percentile_cont(0.25) WITHIN GROUP (ORDER BY pd_pct),
         percentile_cont(0.50) WITHIN GROUP (ORDER BY pd_pct),
         percentile_cont(0.75) WITHIN GROUP (ORDER BY pd_pct)
@@ -437,40 +724,40 @@ export async function getCompanyBenchmark(
           ELSE (
             SELECT COUNT(*)::float / NULLIF((SELECT n FROM grp_n), 0)
             FROM grp
-            WHERE
-              CASE m.metric
-                WHEN 'current_ratio' THEN current_ratio <= m.company_value
-                WHEN 'equity_ratio' THEN equity_ratio <= m.company_value
-                WHEN 'debt_ratio' THEN debt_ratio <= m.company_value
-                WHEN 'roa' THEN roa <= m.company_value
-                WHEN 'roe' THEN roe <= m.company_value
-                WHEN 'net_margin' THEN net_margin <= m.company_value
-                WHEN 'score_total' THEN score_total <= m.company_value
-                WHEN 'pd_pct' THEN pd_pct <= m.company_value
-              END
+            WHERE CASE m.metric
+              WHEN 'current_ratio' THEN current_ratio <= m.company_value
+              WHEN 'equity_ratio' THEN equity_ratio <= m.company_value
+              WHEN 'debt_ratio' THEN debt_ratio <= m.company_value
+              WHEN 'roa' THEN roa <= m.company_value
+              WHEN 'roe' THEN roe <= m.company_value
+              WHEN 'net_margin' THEN net_margin <= m.company_value
+              WHEN 'score_total' THEN score_total <= m.company_value
+              WHEN 'pd_pct' THEN pd_pct <= m.company_value
+            END
           )
         END AS percentile,
         (SELECT n FROM grp_n) AS n
-      FROM metrics m
+      FROM metric_base m
     )
-    SELECT * FROM ranked
-    `,
-    geoLevel === 'country'
-      ? [ctx.ico, fiscalYear, sectorValue]
-      : [ctx.ico, fiscalYear, geoValue, sectorValue]
-  );
+    SELECT
+      r.*,
+      NULL::text AS leader_ico,
+      NULL::text AS leader_name,
+      NULL::float8 AS leader_value
+    FROM ranked r
+  `;
 
-  const n = res.rows[0]?.n ?? 0;
+  const res = await pool.query(sql, [ctx.ico, fiscalYear, sectorValue]);
 
   return {
     context: ctx,
     benchmark: {
-      geo_level: geoLevel,
-      geo_value: geoValue ?? 'Slovensko',
+      geo_level: 'country',
+      geo_value: 'Slovensko',
       sector_level: sectorLevel,
       sector_value: sectorValue,
-      sector_label: sectorLevel === 'main_activity_code_id' ? ctx.main_activity_code_name : ctx.nace_division,
-      n
+      sector_label: sectorLabel,
+      n: res.rows[0]?.n ?? 0
     },
     metrics: res.rows
   };

@@ -10,6 +10,10 @@ type BenchmarkMetricRow = {
   p75_value: number | null;
   percentile: number | null;
   n: number;
+
+  leader_ico: string | null;
+  leader_name: string | null;
+  leader_value: number | null;
 };
 
 type CompanyBenchmarkResult = {
@@ -23,7 +27,7 @@ type CompanyBenchmarkResult = {
     okres: string | null;
   };
   benchmark: {
-    geo_level: 'country' | 'kraj' | 'okres';
+    geo_level: 'country' | 'kraj';
     geo_value: string;
     sector_level: 'nace_division' | 'main_activity_code_id';
     sector_value: string;
@@ -87,9 +91,40 @@ function formatMetric(metric: string, value: number | null) {
     if (value === null || value === undefined) return '—';
     return formatNumberSK(value, 0);
   }
-
   if (isPercentMetric(metric)) return fmtPct(value);
   return fmtRatio(value);
+}
+
+function isHigherBetter(metric: string) {
+  return !['debt_ratio', 'pd_pct'].includes(metric);
+}
+
+function compareToMedianClass(metric: string, companyValue: number | null, medianValue: number | null) {
+  if (companyValue === null || companyValue === undefined || medianValue === null || medianValue === undefined) {
+    return 'text-zinc-700';
+  }
+
+  if (companyValue === medianValue) return 'text-zinc-700';
+
+  const better = isHigherBetter(metric)
+    ? companyValue > medianValue
+    : companyValue < medianValue;
+
+  return better ? 'text-green-700' : 'text-red-700';
+}
+
+function compareToMedianBadge(metric: string, companyValue: number | null, medianValue: number | null) {
+  if (companyValue === null || companyValue === undefined || medianValue === null || medianValue === undefined) {
+    return '—';
+  }
+
+  if (companyValue === medianValue) return 'na mediáne';
+
+  const better = isHigherBetter(metric)
+    ? companyValue > medianValue
+    : companyValue < medianValue;
+
+  return better ? 'nad mediánom' : 'pod mediánom';
 }
 
 export default function CompanyBenchmark({ ico }: { ico: string }) {
@@ -139,11 +174,7 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
   }
 
   if (error || !data) {
-    return (
-      <div className="text-sm text-zinc-600">
-        Sektorové porovnanie zatiaľ nie je dostupné.
-      </div>
-    );
+    return <div className="text-sm text-zinc-600">Sektorové porovnanie zatiaľ nie je dostupné.</div>;
   }
 
   return (
@@ -189,30 +220,70 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
             <tr className="text-left text-xs text-zinc-500">
               <th className="py-2 pr-4">Metrika</th>
               <th className="py-2 pr-4">Firma</th>
+              <th className="py-2 pr-4">Pozícia</th>
               <th className="py-2 pr-4">Medián</th>
               <th className="py-2 pr-4">IQR</th>
               <th className="py-2 pr-4">Percentil</th>
+              <th className="py-2">Líder</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200">
-            {rows.map((r) => (
-              <tr key={r.metric}>
-                <td className="py-2 pr-4 font-medium text-zinc-800">{metricLabel(r.metric)}</td>
-                <td className="py-2 pr-4">{formatMetric(r.metric, r.company_value)}</td>
-                <td className="py-2 pr-4">{formatMetric(r.metric, r.median_value)}</td>
-                <td className="py-2 pr-4">
-                  {formatMetric(r.metric, r.p25_value)} – {formatMetric(r.metric, r.p75_value)}
-                </td>
-                <td className="py-2 pr-4">{fmtPercentile(r.percentile)}</td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const cmpClass = compareToMedianClass(r.metric, r.company_value, r.median_value);
+              const cmpBadge = compareToMedianBadge(r.metric, r.company_value, r.median_value);
+
+              return (
+                <tr key={r.metric}>
+                  <td className="py-2 pr-4 font-medium text-zinc-800">{metricLabel(r.metric)}</td>
+
+                  <td className={`py-2 pr-4 font-medium ${cmpClass}`}>
+                    {formatMetric(r.metric, r.company_value)}
+                  </td>
+
+                  <td className="py-2 pr-4">
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs ${
+                        cmpClass === 'text-green-700'
+                          ? 'bg-green-50 text-green-700'
+                          : cmpClass === 'text-red-700'
+                          ? 'bg-red-50 text-red-700'
+                          : 'bg-zinc-100 text-zinc-600'
+                      }`}
+                    >
+                      {cmpBadge}
+                    </span>
+                  </td>
+
+                  <td className="py-2 pr-4">{formatMetric(r.metric, r.median_value)}</td>
+
+                  <td className="py-2 pr-4">
+                    {formatMetric(r.metric, r.p25_value)} – {formatMetric(r.metric, r.p75_value)}
+                  </td>
+
+                  <td className="py-2 pr-4">{fmtPercentile(r.percentile)}</td>
+
+                  <td className="py-2">
+                    {r.leader_name ? (
+                      <div className="text-zinc-700">
+                        <div className="font-medium">{r.leader_name}</div>
+                        <div className="text-xs text-zinc-500">
+                          {formatMetric(r.metric, r.leader_value)}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-zinc-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <div className="text-[11px] leading-relaxed text-zinc-500">
-        Percentil vyjadruje relatívne poradie firmy v benchmark skupine. Medián je typická hodnota skupiny,
-        IQR zobrazuje stredných 50 % firiem.
+        Zelená znamená priaznivejšiu pozíciu voči mediánu benchmark skupiny, červená slabšiu. Pri
+        metrikách ako zadlženosť a rizikový percentil je nižšia hodnota lepšia.
       </div>
     </div>
   );
