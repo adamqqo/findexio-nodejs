@@ -200,7 +200,7 @@ function CollapsibleSection({
   return (
     <details
       id={id}
-      className="group rounded-3xl border border-zinc-200 bg-white shadow-sm"
+      className="group/section rounded-3xl border border-zinc-200 bg-white shadow-sm"
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-3xl px-4 py-4 sm:px-6">
@@ -208,8 +208,8 @@ function CollapsibleSection({
           <div className="flex items-center gap-2">
             <div className="text-sm font-semibold text-zinc-900">{title}</div>
             <span className="text-xs text-zinc-400">•</span>
-            <span className="text-xs text-zinc-500 group-open:hidden">zobraziť</span>
-            <span className="text-xs text-zinc-500 hidden group-open:inline">skryť</span>
+            <span className="text-xs text-zinc-500 group-open/section:hidden">zobraziť</span>
+            <span className="hidden text-xs text-zinc-500 group-open/section:inline">skryť</span>
           </div>
           {subtitle ? <div className="mt-1 text-xs text-zinc-500">{subtitle}</div> : null}
         </div>
@@ -217,8 +217,8 @@ function CollapsibleSection({
         <div className="flex items-center gap-3">
           {right ? <div className="text-xs text-zinc-500">{right}</div> : null}
           <div className="mt-0.5 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] text-zinc-600">
-            <span className="group-open:hidden">+</span>
-            <span className="hidden group-open:inline">–</span>
+            <span className="group-open/section:hidden">+</span>
+            <span className="hidden group-open/section:inline">–</span>
           </div>
         </div>
       </summary>
@@ -299,20 +299,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
             {identity.address ? <div className="mt-1 text-sm text-zinc-500">{identity.address}</div> : null}
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <a href="#metrics" className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-700">
-                Ukazovatele
-              </a>
-              <a href="#charts" className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-700">
-                Grafy
-              </a>
-              <a href="#scores" className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-700">
-                Skóre
-              </a>
-              <a href="#flags" className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-zinc-700">
-                Diagnostika
-              </a>
-            </div>
           </div>
 
           <div className="grid w-full gap-3 sm:w-[520px]">
@@ -331,7 +317,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             <div className="grid gap-3 sm:grid-cols-2">
               {/* ML = old explanation EXACTLY */}
               <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
-                {/* RISK BLOCK */}
                 {pdLatestRaw ? (
                   <>
                     <div className="flex items-start justify-end gap-2">
@@ -358,7 +343,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                           i
                         </div>
 
-                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
+                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs leading-relaxed text-zinc-700 shadow-lg group-hover:block">
                           <div className="font-medium text-zinc-900">Čo znamená percentil</div>
                           <div className="mt-1 leading-relaxed">
                             Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku.
@@ -409,7 +394,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                 )}
               </div>
 
-              {/* SK model card (short) */}
+              {/* SK model */}
               <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
                 <div className="flex items-start justify-end gap-2">
                   <div>
@@ -435,21 +420,28 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                       i
                     </div>
 
-                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-80 rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs text-zinc-700 shadow-lg group-hover:block">
+                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs leading-relaxed text-zinc-700 shadow-lg group-hover:block">
                       <div className="font-medium text-zinc-900">Slovenský bankrotový model</div>
                       <div className="mt-1 leading-relaxed">
-                        Literatúrny diskriminačný model (Gajdošíková et al.). Používa lineárne skóre{' '}
-                        <span className="font-medium">ySK</span> z pomerových ukazovateľov (vzorec č. 1). Tu zobrazujeme
-                        výsledok prepočítaný na percentil (0–100 %) pre jednoduché porovnanie s ML.
+                        Diskriminačný model (Gajdošíková et al., 2025). Používa lineárne skóre{' '}
+                        <span className="font-medium">ySK</span> z pomerových ukazovateľov. Tu zobrazujeme výsledok
+                        prepočítaný na percentil (0–100 %) pre jednoduché porovnanie s ML.
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {typeof modelSk === 'number' ? (
-                  <div className="mt-2 text-xs text-zinc-500">
-                    Benchmark z literatúry (nie ML). Percentil = relatívne poradie v populácii.
-                  </div>
+                  <>
+                    <div className="mt-2 text-xs text-zinc-500">
+                      Patrí medzi{' '}
+                      <span className="font-medium text-zinc-700">{Math.max(1, 100 - fmtPercentile(modelSk))} %</span>{' '}
+                      najrizikovejších firiem v danom roku.
+                    </div>
+                    <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                      Diskriminačný model navrhnutý pre slovenské podnikateľské prostredie (Gajdošíková et al., 2025).
+                    </div>
+                  </>
                 ) : null}
               </div>
             </div>
