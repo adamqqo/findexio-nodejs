@@ -265,7 +265,7 @@ export type CompanyBenchmarkResult = {
   metrics: BenchmarkMetricRow[];
 };
 
-export async function getCompanyBenchmarkContext(ico: string): Promise<BenchmarkContext | null> {
+export async function getCompanyBenchmark(ico: string): Promise<BenchmarkContext | null> {
   const pool = getPool();
   const variants = icoVariants(ico);
   if (!variants.length) return null;
