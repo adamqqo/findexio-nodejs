@@ -7,7 +7,7 @@ export default function HomePage() {
       <section className="space-y-3">
         <h1 className="text-3xl font-semibold tracking-tight">Findexio</h1>
         <p className="max-w-2xl text-sm text-zinc-600">
-          Vyhľadávanie a hodnotenie firiem na základe účtovných závierok. Zdrojom sú výkazy z RÚZ.
+          Vyhľadávanie a hodnotenie firiem na základe účtovných závierok. Zdrojom sú verejne dostupné dáta z Registra právnických osôb, Registra účtovných závierok a platformy Slovensko.Digital.
         </p>
       </section>
 

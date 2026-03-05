@@ -33,7 +33,7 @@ export default function TopCompanies({ items }: Props) {
             Top firmy podľa známky (2024)
           </h2>
           <p className="mt-1 text-sm text-zinc-600">
-            Zoradené podľa známky, skóre a ukazovateľov (flags, ROA/ROE, marža, likvidita, zadlženie).
+            Zobrazuje iba výber z 25% najväčších firiem (tržby+majetok). Zoradené podľa známky, skóre podľa Kralicek Quick-Test (KQT), veľkosti firmy.
           </p>
         </div>
       </div>

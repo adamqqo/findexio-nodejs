@@ -41,29 +41,70 @@ export default function CompanyCharts({ ico }: { ico: string }) {
   const [aggregates, setAggregates] = useState<AggregateRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+function toNum(x: unknown): number | null {
+  if (x === null || typeof x === 'undefined') return null;
+  if (typeof x === 'number' && Number.isFinite(x)) return x;
+  if (typeof x === 'string' && x.trim() !== '') {
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
 
-    (async () => {
-      try {
-        setError(null);
-        const res = await fetch(`/api/company/${encodeURIComponent(ico)}/timeseries`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        if (cancelled) return;
+useEffect(() => {
+  let cancelled = false;
 
-        setGrades((data.grades ?? []) as GradeRow[]);
-        setFeatures((data.featuresSeries ?? []) as FeatureSeriesRow[]);
-        setAggregates((data.aggregates ?? []) as AggregateRow[]);
-      } catch (e: any) {
-        if (!cancelled) setError(String(e?.message ?? e));
-      }
-    })();
+  (async () => {
+    try {
+      setError(null);
+      const res = await fetch(`/api/company/${encodeURIComponent(ico)}/timeseries`, { cache: 'no-store' });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      if (cancelled) return;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [ico]);
+      const rawGrades = (data.grades ?? []) as any[];
+      const rawFeatures = (data.featuresSeries ?? []) as any[];
+      const rawAgg = (data.aggregates ?? []) as any[];
+
+      setGrades(
+        rawGrades.map((g) => ({
+          fiscal_year: Number(g.fiscal_year),
+          grade: g.grade ?? null,
+          score_total: toNum(g.score_total)
+        }))
+      );
+
+      setFeatures(
+        rawFeatures.map((f) => ({
+          fiscal_year: Number(f.fiscal_year),
+          current_ratio: toNum(f.current_ratio),
+          debt_ratio: toNum(f.debt_ratio),
+          equity_ratio: toNum(f.equity_ratio),
+          roa: toNum(f.roa),
+          roe: toNum(f.roe),
+          net_margin: toNum(f.net_margin)
+        }))
+      );
+
+      setAggregates(
+        rawAgg.map((a) => ({
+          fiscal_year: Number(a.fiscal_year),
+          revenue: toNum(a.revenue),
+          net_income: toNum(a.net_income),
+          ebit: toNum(a.ebit),
+          total_assets: toNum(a.total_assets),
+          equity: toNum(a.equity)
+        }))
+      );
+    } catch (e: any) {
+      if (!cancelled) setError(String(e?.message ?? e));
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [ico]);
 
   // --- Points ---
   const revenuePoints = useMemo(

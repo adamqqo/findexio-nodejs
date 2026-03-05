@@ -1,3 +1,5 @@
+// noinspection SqlResolve
+
 import { getPool } from './db';
 
 function normalizeIco(input: string): string {
@@ -210,16 +212,17 @@ export async function getCompanyPdSeries(ico: string): Promise<PdRow[]> {
 
   const res = await pool.query(
     `
-    SELECT fiscal_year, pd_12m, pd_pct
-    FROM core.ml_pd_predictions
-    WHERE ico = ANY($1::text[])
-      AND model_id = (
-        SELECT id
-        FROM core.ml_model_registry
-        ORDER BY created_at DESC
-        LIMIT 1
-      )
-    ORDER BY fiscal_year ASC
+    WITH latest_model AS (
+      SELECT id
+      FROM core.ml_model_registry
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
+    SELECT p.fiscal_year, p.pd_12m, p.pd_pct
+    FROM core.ml_pd_predictions p
+    JOIN latest_model m ON m.id = p.model_id
+    WHERE p.ico = ANY($1::text[])
+    ORDER BY p.fiscal_year ASC
     `,
     [variants]
   );
