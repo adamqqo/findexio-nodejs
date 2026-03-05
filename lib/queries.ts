@@ -265,11 +265,7 @@ export type CompanyBenchmarkResult = {
   metrics: BenchmarkMetricRow[];
 };
 
-export async function getCompanyBenchmark(ico: string, p0: {
-    fiscalYear: number | undefined;
-    geoLevel: string | undefined;
-    sectorLevel: string | undefined;
-}): Promise<BenchmarkContext | null> {
+export async function getCompanyBenchmarkContext(ico: string): Promise<BenchmarkContext | null> {
   const pool = getPool();
   const variants = icoVariants(ico);
   if (!variants.length) return null;
@@ -293,4 +289,189 @@ export async function getCompanyBenchmark(ico: string, p0: {
   );
 
   return res.rows[0] ?? null;
+}
+
+export async function getCompanyBenchmark(
+  ico: string,
+  opts?: {
+    fiscalYear?: number;
+    geoLevel?: 'country' | 'kraj' | 'okres';
+    sectorLevel?: 'nace_division' | 'main_activity_code_id';
+  }
+): Promise<CompanyBenchmarkResult | null> {
+  const pool = getPool();
+  const ctx = await getCompanyBenchmarkContext(ico);
+  if (!ctx) return null;
+
+  const fiscalYear = opts?.fiscalYear ?? ctx.fiscal_year;
+  const geoLevel = opts?.geoLevel ?? 'kraj';
+  const sectorLevel = opts?.sectorLevel ?? 'nace_division';
+
+  const geoValue =
+    geoLevel === 'okres'
+      ? ctx.okres
+      : geoLevel === 'kraj'
+      ? ctx.kraj
+      : 'Slovensko';
+
+  const sectorValue =
+    sectorLevel === 'main_activity_code_id'
+      ? ctx.main_activity_code_id
+      : ctx.nace_division;
+
+  if (!sectorValue) return null;
+  if ((geoLevel === 'kraj' || geoLevel === 'okres') && !geoValue) return null;
+
+  const geoSql =
+    geoLevel === 'country'
+      ? 'TRUE'
+      : geoLevel === 'kraj'
+      ? 'kraj = $3'
+      : 'okres = $3';
+
+  const sectorSql =
+    sectorLevel === 'main_activity_code_id'
+      ? 'main_activity_code_id = $4'
+      : 'nace_division = $4';
+
+  const res = await pool.query(
+    `
+    WITH company_row AS (
+      SELECT *
+      FROM core.mv_company_benchmark_facts
+      WHERE ico = $1
+        AND fiscal_year = $2
+      LIMIT 1
+    ),
+    grp AS (
+      SELECT *
+      FROM core.mv_company_benchmark_facts
+      WHERE fiscal_year = $2
+        AND ${geoSql}
+        AND ${sectorSql}
+    ),
+    grp_n AS (
+      SELECT COUNT(*)::int AS n FROM grp
+    ),
+    metrics AS (
+      SELECT
+        'current_ratio' AS metric,
+        (SELECT current_ratio FROM company_row) AS company_value,
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY current_ratio) AS p25_value,
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY current_ratio) AS median_value,
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY current_ratio) AS p75_value
+      FROM grp WHERE current_ratio IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'equity_ratio',
+        (SELECT equity_ratio FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY equity_ratio),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY equity_ratio),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY equity_ratio)
+      FROM grp WHERE equity_ratio IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'debt_ratio',
+        (SELECT debt_ratio FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY debt_ratio),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY debt_ratio),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY debt_ratio)
+      FROM grp WHERE debt_ratio IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'roa',
+        (SELECT roa FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY roa),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY roa),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY roa)
+      FROM grp WHERE roa IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'roe',
+        (SELECT roe FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY roe),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY roe),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY roe)
+      FROM grp WHERE roe IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'net_margin',
+        (SELECT net_margin FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY net_margin),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY net_margin),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY net_margin)
+      FROM grp WHERE net_margin IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'score_total',
+        (SELECT score_total FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY score_total),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY score_total),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY score_total)
+      FROM grp WHERE score_total IS NOT NULL
+
+      UNION ALL
+      SELECT
+        'pd_pct',
+        (SELECT pd_pct FROM company_row),
+        percentile_cont(0.25) WITHIN GROUP (ORDER BY pd_pct),
+        percentile_cont(0.50) WITHIN GROUP (ORDER BY pd_pct),
+        percentile_cont(0.75) WITHIN GROUP (ORDER BY pd_pct)
+      FROM grp WHERE pd_pct IS NOT NULL
+    ),
+    ranked AS (
+      SELECT
+        m.metric,
+        m.company_value,
+        m.p25_value,
+        m.median_value,
+        m.p75_value,
+        CASE
+          WHEN m.company_value IS NULL THEN NULL
+          ELSE (
+            SELECT COUNT(*)::float / NULLIF((SELECT n FROM grp_n), 0)
+            FROM grp
+            WHERE
+              CASE m.metric
+                WHEN 'current_ratio' THEN current_ratio <= m.company_value
+                WHEN 'equity_ratio' THEN equity_ratio <= m.company_value
+                WHEN 'debt_ratio' THEN debt_ratio <= m.company_value
+                WHEN 'roa' THEN roa <= m.company_value
+                WHEN 'roe' THEN roe <= m.company_value
+                WHEN 'net_margin' THEN net_margin <= m.company_value
+                WHEN 'score_total' THEN score_total <= m.company_value
+                WHEN 'pd_pct' THEN pd_pct <= m.company_value
+              END
+          )
+        END AS percentile,
+        (SELECT n FROM grp_n) AS n
+      FROM metrics m
+    )
+    SELECT * FROM ranked
+    `,
+    geoLevel === 'country'
+      ? [ctx.ico, fiscalYear, sectorValue]
+      : [ctx.ico, fiscalYear, geoValue, sectorValue]
+  );
+
+  const n = res.rows[0]?.n ?? 0;
+
+  return {
+    context: ctx,
+    benchmark: {
+      geo_level: geoLevel,
+      geo_value: geoValue ?? 'Slovensko',
+      sector_level: sectorLevel,
+      sector_value: sectorValue,
+      sector_label: sectorLevel === 'main_activity_code_id' ? ctx.main_activity_code_name : ctx.nace_division,
+      n
+    },
+    metrics: res.rows
+  };
 }
