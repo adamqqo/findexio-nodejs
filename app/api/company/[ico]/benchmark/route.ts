@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ ico: str
   const sectorLevelRaw = searchParams.get('sector');
 
   const geoLevel =
-    geoLevelRaw === 'country' || geoLevelRaw === 'kraj' || geoLevelRaw === 'okres'
+    geoLevelRaw === 'country' || geoLevelRaw === 'kraj'
       ? geoLevelRaw
       : undefined;
 
