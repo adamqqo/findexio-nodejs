@@ -231,3 +231,62 @@ export async function getCompanyPdSeries(ico: string): Promise<PdRow[]> {
 
   return res.rows;
 }
+
+export type BenchmarkContext = {
+  ico: string;
+  fiscal_year: number;
+  nace_division: string | null;
+  main_activity_code_id: string | null;
+  main_activity_code_name: string | null;
+  kraj: string | null;
+  okres: string | null;
+};
+
+export type BenchmarkMetricRow = {
+  metric: string;
+  company_value: number | null;
+  median_value: number | null;
+  p25_value: number | null;
+  p75_value: number | null;
+  percentile: number | null;
+  n: number;
+};
+
+export type CompanyBenchmarkResult = {
+  context: BenchmarkContext;
+  benchmark: {
+    geo_level: 'country' | 'kraj' | 'okres';
+    geo_value: string;
+    sector_level: 'nace_division' | 'main_activity_code_id';
+    sector_value: string;
+    sector_label: string | null;
+    n: number;
+  };
+  metrics: BenchmarkMetricRow[];
+};
+
+export async function getCompanyBenchmarkContext(ico: string): Promise<BenchmarkContext | null> {
+  const pool = getPool();
+  const variants = icoVariants(ico);
+  if (!variants.length) return null;
+
+  const res = await pool.query(
+    `
+    SELECT
+      f.ico,
+      f.fiscal_year,
+      f.nace_division,
+      f.main_activity_code_id,
+      f.main_activity_code_name,
+      f.kraj,
+      f.okres
+    FROM core.mv_company_benchmark_facts f
+    WHERE f.ico = ANY($1::text[])
+    ORDER BY f.fiscal_year DESC
+    LIMIT 1
+    `,
+    [variants]
+  );
+
+  return res.rows[0] ?? null;
+}

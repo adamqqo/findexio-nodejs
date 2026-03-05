@@ -1,6 +1,7 @@
 import GradeBadge from '@/components/GradeBadge';
 import MetricCard from '@/components/MetricCard';
 import CompanyCharts from '@/components/CompanyCharts';
+import CompanyBenchmark from '@/components/CompanyBenchmark';
 import Link from 'next/link';
 import {
   getCompanyGrades,
@@ -623,6 +624,17 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
         </CollapsibleSection>
       </div>
 
+        {/* BENCHMARK (collapsible) */}
+        <div id="benchmark" className="scroll-mt-24">
+          <CollapsibleSection
+            id="benchmark-section"
+            title="Sektorové porovnanie"
+            subtitle="Porovnanie firmy s podobnými firmami v rámci sektora a územia."
+            defaultOpen={false}
+          >
+            <CompanyBenchmark ico={identity.ico} />
+          </CollapsibleSection>
+        </div>
       {/* FLAGS (collapsible) */}
       <div id="flags" className="scroll-mt-24">
         <CollapsibleSection
