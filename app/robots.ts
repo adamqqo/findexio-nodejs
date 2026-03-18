@@ -8,10 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/'
     },
-    sitemap: [
-      `${BASE_URL}/sitemap.xml`,
-      `${BASE_URL}/company/sitemap/0.xml`
-    ],
+    sitemap: `${BASE_URL}/sitemap.xml`,
     host: BASE_URL
   };
 }
