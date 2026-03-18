@@ -762,3 +762,38 @@ export async function getCompanyBenchmark(
     metrics: res.rows
   };
 }
+
+export async function getSitemapCompanyCount(): Promise<number> {
+  const pool = getPool();
+
+  const res = await pool.query(
+    `
+    SELECT COUNT(*)::int AS cnt
+    FROM core.rpo_all_orgs
+    WHERE legal_form_code IN ('112', '121')
+      AND ico IS NOT NULL
+      AND trim(ico) <> ''
+    `
+  );
+
+  return res.rows[0]?.cnt ?? 0;
+}
+
+export async function getSitemapCompanies(limit: number, offset: number): Promise<{ ico: string }[]> {
+  const pool = getPool();
+
+  const res = await pool.query(
+    `
+    SELECT ico
+    FROM core.rpo_all_orgs
+    WHERE legal_form_code IN ('112', '121')
+      AND ico IS NOT NULL
+      AND trim(ico) <> ''
+    ORDER BY ico
+    LIMIT $1 OFFSET $2
+    `,
+    [limit, offset]
+  );
+
+  return res.rows;
+}
