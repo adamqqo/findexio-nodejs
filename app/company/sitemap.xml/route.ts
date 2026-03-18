@@ -1,6 +1,6 @@
 import { getSitemapCompanyCount } from '@/lib/queries';
 
-const BASE_URL = 'https://findexio-nodejs-production.up.railway.app';
+const BASE_URL = 'https://findexio.sk';
 const CHUNK_SIZE = 50000;
 
 export async function GET() {
