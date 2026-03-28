@@ -27,6 +27,32 @@ export type CompanyIdentity = {
   address: string | null;
 };
 
+export type ProcessedDataStats = {
+  processed_statements: number;
+  processed_companies: number;
+};
+
+export async function getProcessedDataStats(): Promise<ProcessedDataStats> {
+  const pool = getPool();
+
+  const res = await pool.query(
+    `
+    SELECT
+      COUNT(*)::int AS processed_statements,
+      COUNT(DISTINCT ico)::int AS processed_companies
+    FROM core.fin_annual_features
+    WHERE norm_period = 1
+    `
+  );
+
+  return (
+    res.rows[0] ?? {
+      processed_statements: 0,
+      processed_companies: 0
+    }
+  );
+}
+
 export type GradeRow = {
   fiscal_year: number;
   period_end: string | null;
