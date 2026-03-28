@@ -4,26 +4,24 @@ export default function GradeBadge({ grade }: { grade?: string | null }) {
   const cls = (() => {
     switch (g) {
       case 'A':
-        return 'border-emerald-300 bg-emerald-50 text-emerald-700';
+        return 'bg-zinc-900 text-white';
       case 'B':
-        return 'border-teal-300 bg-teal-50 text-teal-700';
+        return 'bg-zinc-800 text-white';
       case 'C':
-        return 'border-sky-300 bg-sky-50 text-sky-700';
+        return 'bg-zinc-700 text-white';
       case 'D':
-        return 'border-amber-300 bg-amber-50 text-amber-700';
+        return 'bg-zinc-600 text-white';
       case 'E':
-        return 'border-orange-300 bg-orange-50 text-orange-700';
+        return 'bg-zinc-500 text-white';
       case 'F':
-        return 'border-rose-300 bg-rose-50 text-rose-700';
+        return 'bg-zinc-950 text-white';
       default:
-        return 'border-slate-300 bg-white text-slate-700';
+        return 'bg-white text-zinc-900 border border-zinc-300';
     }
   })();
 
   return (
-    <span
-      className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${cls}`}
-    >
+    <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${cls}`}>
       Grade {g}
     </span>
   );
