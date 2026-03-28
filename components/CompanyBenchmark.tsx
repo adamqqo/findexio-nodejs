@@ -101,16 +101,16 @@ function isHigherBetter(metric: string) {
 
 function compareToMedianClass(metric: string, companyValue: number | null, medianValue: number | null) {
   if (companyValue === null || companyValue === undefined || medianValue === null || medianValue === undefined) {
-    return 'text-zinc-700';
+    return 'text-slate-300';
   }
 
-  if (companyValue === medianValue) return 'text-zinc-700';
+  if (companyValue === medianValue) return 'text-slate-300';
 
   const better = isHigherBetter(metric)
     ? companyValue > medianValue
     : companyValue < medianValue;
 
-  return better ? 'text-green-700' : 'text-red-700';
+  return better ? 'text-emerald-300' : 'text-rose-300';
 }
 
 function compareToMedianBadge(metric: string, companyValue: number | null, medianValue: number | null) {
@@ -170,22 +170,22 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
   const rows = useMemo(() => data?.metrics ?? [], [data]);
 
   if (loading) {
-    return <div className="text-sm text-zinc-600">Načítavam sektorové porovnanie…</div>;
+    return <div className="text-sm text-slate-300">Načítavam sektorové porovnanie…</div>;
   }
 
   if (error || !data) {
-    return <div className="text-sm text-zinc-600">Sektorové porovnanie zatiaľ nie je dostupné.</div>;
+    return <div className="text-sm text-slate-300">Sektorové porovnanie zatiaľ nie je dostupné.</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-zinc-600">
+        <div className="text-sm text-slate-300">
           Benchmark skupina:{' '}
-          <span className="font-medium text-zinc-800">
+          <span className="font-medium text-slate-200">
             {data.benchmark.geo_value} • {data.benchmark.sector_label ?? data.benchmark.sector_value}
           </span>
-          <span className="ml-2 text-zinc-500">(n = {data.benchmark.n})</span>
+          <span className="ml-2 text-slate-400">(n = {data.benchmark.n})</span>
         </div>
 
         <div className="flex gap-2 text-xs">
@@ -194,8 +194,8 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
             onClick={() => setGeo('kraj')}
             className={`rounded-full border px-3 py-1 ${
               geo === 'kraj'
-                ? 'border-zinc-900 bg-zinc-900 text-white'
-                : 'border-zinc-200 bg-white text-zinc-700'
+                ? 'border-[#51c7e9]/70 bg-[#51c7e9]/20 text-white'
+                : 'border-white/10 bg-black/20 text-slate-300'
             }`}
           >
             Kraj
@@ -205,8 +205,8 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
             onClick={() => setGeo('country')}
             className={`rounded-full border px-3 py-1 ${
               geo === 'country'
-                ? 'border-zinc-900 bg-zinc-900 text-white'
-                : 'border-zinc-200 bg-white text-zinc-700'
+                ? 'border-[#51c7e9]/70 bg-[#51c7e9]/20 text-white'
+                : 'border-white/10 bg-black/20 text-slate-300'
             }`}
           >
             Slovensko
@@ -217,7 +217,7 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="text-left text-xs text-zinc-500">
+            <tr className="text-left text-xs text-slate-400">
               <th className="py-2 pr-4">Metrika</th>
               <th className="py-2 pr-4">Firma</th>
               <th className="py-2 pr-4">Pozícia</th>
@@ -227,14 +227,14 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
               <th className="py-2">Líder</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200">
+          <tbody className="divide-y divide-white/10">
             {rows.map((r) => {
               const cmpClass = compareToMedianClass(r.metric, r.company_value, r.median_value);
               const cmpBadge = compareToMedianBadge(r.metric, r.company_value, r.median_value);
 
               return (
                 <tr key={r.metric}>
-                  <td className="py-2 pr-4 font-medium text-zinc-800">{metricLabel(r.metric)}</td>
+                  <td className="py-2 pr-4 font-medium text-slate-200">{metricLabel(r.metric)}</td>
 
                   <td className={`py-2 pr-4 font-medium ${cmpClass}`}>
                     {formatMetric(r.metric, r.company_value)}
@@ -243,11 +243,11 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
                   <td className="py-2 pr-4">
                     <span
                       className={`rounded-full px-2 py-1 text-xs ${
-                        cmpClass === 'text-green-700'
-                          ? 'bg-green-50 text-green-700'
-                          : cmpClass === 'text-red-700'
-                          ? 'bg-red-50 text-red-700'
-                          : 'bg-zinc-100 text-zinc-600'
+                        cmpClass === 'text-emerald-300'
+                          ? 'bg-emerald-500/15 text-emerald-200'
+                          : cmpClass === 'text-rose-300'
+                          ? 'bg-rose-500/15 text-rose-200'
+                          : 'bg-white/10 text-slate-300'
                       }`}
                     >
                       {cmpBadge}
@@ -264,14 +264,14 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
 
                   <td className="py-2">
                     {r.leader_name ? (
-                      <div className="text-zinc-700">
+                      <div className="text-slate-300">
                         <div className="font-medium">{r.leader_name}</div>
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-slate-400">
                           {formatMetric(r.metric, r.leader_value)}
                         </div>
                       </div>
                     ) : (
-                      <span className="text-zinc-400">—</span>
+                      <span className="text-slate-500">—</span>
                     )}
                   </td>
                 </tr>
@@ -281,7 +281,7 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
         </table>
       </div>
 
-      <div className="text-[11px] leading-relaxed text-zinc-500">
+      <div className="text-[11px] leading-relaxed text-slate-400">
         Zelená znamená priaznivejšiu pozíciu voči mediánu benchmark skupiny, červená slabšiu. Pri
         metrikách ako zadlženosť a rizikový percentil je nižšia hodnota lepšia.
       </div>

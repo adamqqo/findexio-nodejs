@@ -174,10 +174,10 @@ useEffect(() => {
 
   if (error) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-white/10 bg-black/20 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Grafy</h2>
-        <div className="mt-2 text-sm text-zinc-600">Grafy sa nepodarilo načítať.</div>
-        <pre className="mt-3 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700">
+        <div className="mt-2 text-sm text-slate-300">Grafy sa nepodarilo načítať.</div>
+        <pre className="mt-3 overflow-auto rounded-lg border border-white/10 bg-[#081025] p-3 text-xs text-slate-300">
           {error}
         </pre>
       </section>
@@ -186,9 +186,9 @@ useEffect(() => {
 
   if (!hasAnyData) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-white/10 bg-black/20 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Grafy</h2>
-        <div className="mt-2 text-sm text-zinc-600">Nie sú dostupné dáta pre grafy.</div>
+        <div className="mt-2 text-sm text-slate-300">Nie sú dostupné dáta pre grafy.</div>
       </section>
     );
   }
@@ -200,7 +200,7 @@ useEffect(() => {
     <section className="space-y-4">
       <div className="flex items-end justify-between">
         <h2 className="text-sm font-semibold">Grafy (vývoj v čase)</h2>
-        <div className="text-xs text-zinc-500">norm_period = 1</div>
+        <div className="text-xs text-slate-400">norm_period = 1</div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

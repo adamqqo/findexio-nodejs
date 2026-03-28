@@ -230,22 +230,22 @@ export default function SimpleLineChart({
   }
 
   return (
-    <div className="relative rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+    <div className="relative rounded-2xl border border-white/10 bg-black/20 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm font-semibold text-zinc-900">{title}</div>
-          {subtitle ? <div className="mt-1 text-xs text-zinc-500">{subtitle}</div> : null}
+          <div className="text-sm font-semibold text-white">{title}</div>
+          {subtitle ? <div className="mt-1 text-xs text-slate-400">{subtitle}</div> : null}
         </div>
 
-        <div className="text-right text-xs text-zinc-500">
-          <div className="font-medium text-zinc-700">
+        <div className="text-right text-xs text-slate-400">
+          <div className="font-medium text-slate-300">
             {xMin} – {xMax}
           </div>
         </div>
       </div>
 
       {ysRaw.length === 0 ? (
-        <div className="mt-3 text-sm text-zinc-600">Nie sú dostupné dáta pre graf.</div>
+        <div className="mt-3 text-sm text-slate-300">Nie sú dostupné dáta pre graf.</div>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <svg
@@ -260,30 +260,30 @@ export default function SimpleLineChart({
 
               return (
                 <g key={i}>
-                  <line x1={padL} y1={y} x2={width - padR} y2={y} stroke="rgba(0,0,0,0.08)" />
-                  <text x={padL - 8} y={y + 4} textAnchor="end" fontSize="10" fill="rgba(0,0,0,0.55)">
+                  <line x1={padL} y1={y} x2={width - padR} y2={y} stroke="rgba(148,163,184,0.18)" />
+                  <text x={padL - 8} y={y + 4} textAnchor="end" fontSize="10" fill="rgba(203,213,225,0.8)">
                     {formatTick(tRaw)}
                   </text>
                 </g>
               );
             })}
 
-            <line x1={padL} y1={height - padB} x2={width - padR} y2={height - padB} stroke="rgba(0,0,0,0.12)" />
+            <line x1={padL} y1={height - padB} x2={width - padR} y2={height - padB} stroke="rgba(148,163,184,0.25)" />
 
-            <text x={padL} y={height - 10} fontSize="10" fill="rgba(0,0,0,0.55)">
+            <text x={padL} y={height - 10} fontSize="10" fill="rgba(203,213,225,0.8)">
               {xMin}
             </text>
 
-            <text x={width - padR} y={height - 10} textAnchor="end" fontSize="10" fill="rgba(0,0,0,0.55)">
+            <text x={width - padR} y={height - 10} textAnchor="end" fontSize="10" fill="rgba(203,213,225,0.8)">
               {xMax}
             </text>
 
-            <path d={pathD} fill="none" stroke="black" strokeWidth="2" />
+            <path d={pathD} fill="none" stroke="#51c7e9" strokeWidth="2" />
 
             {validPoints.map((p, idx) => {
               const cx = xScale(p.x);
               const cy = yScale(p.y);
-              return <circle key={idx} cx={cx} cy={cy} r="3" fill="black" />;
+              return <circle key={idx} cx={cx} cy={cy} r="3" fill="#f5be42" />;
             })}
 
             {hover ? (
@@ -293,11 +293,11 @@ export default function SimpleLineChart({
                   y1={padT}
                   x2={hover.cx}
                   y2={height - padB}
-                  stroke="rgba(0,0,0,0.15)"
+                  stroke="rgba(148,163,184,0.35)"
                   strokeDasharray="4 4"
                 />
 
-                <circle cx={hover.cx} cy={hover.cy} r="5" fill="white" stroke="black" strokeWidth="2" />
+                <circle cx={hover.cx} cy={hover.cy} r="5" fill="#081025" stroke="#51c7e9" strokeWidth="2" />
               </g>
             ) : null}
           </svg>
@@ -347,11 +347,11 @@ function TooltipFollowCursor({
   return (
     <div
       ref={tooltipRef}
-      className="pointer-events-none fixed z-50 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs shadow-lg"
+      className="pointer-events-none fixed z-50 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs shadow-lg"
       style={{ left: pos.left, top: pos.top }}
     >
-      <div className="font-medium text-zinc-900">{hover.year}</div>
-      <div className="text-zinc-600">{formatTooltip(hover.rawY)}</div>
+      <div className="font-medium text-white">{hover.year}</div>
+      <div className="text-slate-300">{formatTooltip(hover.rawY)}</div>
     </div>
   );
 }
