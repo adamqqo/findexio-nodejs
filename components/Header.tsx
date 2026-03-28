@@ -11,7 +11,7 @@ export default function Header() {
               src="/logo-wordmark.svg"
               alt="Findexio"
               width={1180}
-              height={276}
+              height={320}
               priority
               className="h-auto w-[190px] max-w-[56vw] object-contain sm:w-[260px] lg:w-[360px]"
             />
