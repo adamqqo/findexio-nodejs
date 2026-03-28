@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="navyGrad" x1="0" y1="0" x2="300" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4B86"/>
+      <stop offset="1" stop-color="#1D2D49"/>
+    </linearGradient>
+    <linearGradient id="tealGrad" x1="0" y1="0" x2="260" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2EA2CE"/>
+      <stop offset="1" stop-color="#217D82"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0" y1="0" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD554"/>
+      <stop offset="1" stop-color="#F5BE42"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="48" y="36" width="314" height="100" rx="14" fill="url(#navyGrad)"/>
+  <rect x="48" y="186" width="282" height="100" rx="14" fill="url(#tealGrad)"/>
+  <rect x="48" y="322" width="90" height="154" rx="14" fill="url(#navyGrad)"/>
+  <rect x="162" y="322" width="110" height="110" rx="14" fill="url(#goldGrad)"/>
+</svg>

@@ -3,14 +3,46 @@ import './globals.css';
 import Header from '@/components/Header';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://finance-rating-app.vercel.app'),
   title: 'Findexio',
-  description: 'Hodnotenie finančného zdravia slovenských firiem.'
+  description: 'Hodnotenie finančného zdravia slovenských firiem.',
+  applicationName: 'Findexio',
+  icons: {
+    icon: [
+      { url: '/logo-mark.svg', type: 'image/svg+xml' }
+    ],
+    shortcut: ['/logo-mark.svg'],
+    apple: [{ url: '/logo-mark.svg', sizes: '180x180', type: 'image/svg+xml' }]
+  },
+  openGraph: {
+    title: 'Findexio',
+    description: 'Hodnotenie finančného zdravia slovenských firiem.',
+    images: [{ url: '/logo-mark.svg', width: 512, height: 512, alt: 'Findexio logo' }]
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Findexio',
+    description: 'Hodnotenie finančného zdravia slovenských firiem.',
+    images: ['/logo-mark.svg']
+  }
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Findexio',
+  url: 'https://github.com/adamqqo/finance-rating-app',
+  logo: 'https://github.com/adamqqo/finance-rating-app/raw/main/public/logo-mark.svg'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sk">
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <div className="aurora aurora-top" aria-hidden />
         <div className="aurora aurora-bottom" aria-hidden />
 
