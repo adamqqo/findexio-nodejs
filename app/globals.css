@@ -3,21 +3,60 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
-html, body {
-  height: 100%;
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  @apply bg-white text-zinc-900 antialiased;
+  @apply antialiased;
+  background:
+    radial-gradient(circle at 10% -10%, rgba(33, 125, 130, 0.32), transparent 35%),
+    radial-gradient(circle at 90% 10%, rgba(245, 190, 66, 0.16), transparent 30%),
+    linear-gradient(160deg, #02030a 0%, #050a15 45%, #0b162c 100%);
+  color: #f8fafc;
 }
 
 a {
-  @apply text-zinc-900 underline underline-offset-4 decoration-zinc-300 hover:decoration-zinc-900;
+  @apply underline-offset-4;
+  color: #dbeafe;
+}
+
+a:hover {
+  color: #ffffff;
 }
 
 .container {
   @apply mx-auto max-w-6xl px-4;
+}
+
+.glass-panel {
+  @apply rounded-3xl border border-white/10 bg-white/[0.03] shadow-[0_14px_50px_rgba(0,0,0,0.45)] backdrop-blur;
+}
+
+.aurora {
+  pointer-events: none;
+  position: fixed;
+  z-index: -1;
+  border-radius: 9999px;
+  filter: blur(80px);
+}
+
+.aurora-top {
+  top: -120px;
+  left: -120px;
+  width: 320px;
+  height: 320px;
+  background: rgba(33, 125, 130, 0.3);
+}
+
+.aurora-bottom {
+  right: -120px;
+  bottom: -100px;
+  width: 300px;
+  height: 300px;
+  background: rgba(29, 45, 73, 0.45);
 }
