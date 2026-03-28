@@ -1,4 +1,4 @@
-<svg width="960" height="276" viewBox="0 0 960 276" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1180" height="276" viewBox="0 0 1180 276" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="navyGrad" x1="0" y1="0" x2="260" y2="120" gradientUnits="userSpaceOnUse">
       <stop stop-color="#1D4B86"/>
@@ -19,5 +19,5 @@
   <rect x="6" y="188" width="72" height="82" rx="10" fill="url(#navyGrad)"/>
   <rect x="94" y="188" width="72" height="72" rx="10" fill="url(#goldGrad)"/>
 
-  <text x="300" y="218" fill="#1D4B86" font-family="Open Sans, Segoe UI, Arial, sans-serif" font-size="184" font-weight="700" letter-spacing="-2">Findexio</text>
+  <text x="280" y="218" fill="#1D4B86" font-family="Open Sans, Segoe UI, Arial, sans-serif" font-size="184" font-weight="700" letter-spacing="-2">Findexio</text>
 </svg>

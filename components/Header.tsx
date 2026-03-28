@@ -10,10 +10,10 @@ export default function Header() {
             <Image
               src="/logo-wordmark.svg"
               alt="Findexio"
-              width={320}
-              height={92}
+              width={1180}
+              height={276}
               priority
-              className="h-auto w-[190px] object-contain sm:w-[320px]"
+              className="h-auto w-[190px] max-w-[56vw] object-contain sm:w-[260px] lg:w-[360px]"
             />
             <div className="hidden lg:block">
               <div className="text-[11px] uppercase tracking-[0.25em] text-[#51c7e9]">Financial Intelligence</div>
