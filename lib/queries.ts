@@ -236,7 +236,6 @@ export type BenchmarkContext = {
   ico: string;
   fiscal_year: number;
   nace_division: string | null;
-  nace_division_name: string | null;
   main_activity_code_id: string | null;
   main_activity_code_name: string | null;
   kraj: string | null;
@@ -281,13 +280,6 @@ export async function getCompanyBenchmarkContext(ico: string): Promise<Benchmark
       f.ico,
       f.fiscal_year,
       f.nace_division,
-      (
-        SELECT sd.main_activity_code_name
-        FROM core.sd_org sd
-        WHERE sd.ico = f.ico
-          AND sd.nace_division = f.nace_division
-        LIMIT 1
-      ) AS nace_division_name,
       f.main_activity_code_id,
       f.main_activity_code_name,
       f.kraj,
@@ -316,13 +308,17 @@ export async function getCompanyBenchmark(
   if (!ctx) return null;
 
   const fiscalYear = opts?.fiscalYear ?? ctx.fiscal_year;
-  const geoLevel = opts?.geoLevel ?? 'kraj';
-  const sectorLevel = opts?.sectorLevel ?? 'nace_division';
+  let geoLevel = opts?.geoLevel ?? 'kraj';
+
+  // Prefer requested sector granularity but gracefully fallback for companies
+  // where `nace_division` is missing in benchmark facts.
+  let sectorLevel = opts?.sectorLevel ?? 'nace_division';
+  if (sectorLevel === 'nace_division' && !ctx.nace_division && ctx.main_activity_code_id) {
+    sectorLevel = 'main_activity_code_id';
+  }
 
   const sectorValue =
-    sectorLevel === 'main_activity_code_id'
-      ? ctx.main_activity_code_id
-      : ctx.nace_division;
+    sectorLevel === 'main_activity_code_id' ? ctx.main_activity_code_id : ctx.nace_division;
 
   if (!sectorValue) return null;
 
@@ -334,7 +330,11 @@ export async function getCompanyBenchmark(
   const sectorLabel =
     sectorLevel === 'main_activity_code_id'
       ? ctx.main_activity_code_name
-      : ctx.nace_division_name ?? ctx.nace_division;
+      : ctx.nace_division;
+
+  if (geoLevel === 'kraj' && !ctx.kraj) {
+    geoLevel = 'country';
+  }
 
   let geoValue = 'Slovensko';
   let sql = '';
