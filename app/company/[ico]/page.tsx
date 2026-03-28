@@ -43,10 +43,10 @@ function toNum(x: unknown): number | null {
 /* ---------- RISK LOGIC BASED ON PERCENTILE ---------- */
 
 function riskLabelFromPct(pd_pct: number) {
-  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-green-600' };
-  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-600' };
-  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-600' };
-  return { label: 'Vysoké riziko', color: 'text-red-600' };
+  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-emerald-300' };
+  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-300' };
+  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-300' };
+  return { label: 'Vysoké riziko', color: 'text-rose-300' };
 }
 
 function fmtPercentile(pd_pct: number) {
@@ -172,13 +172,13 @@ function companyStatusBadge(status: string | null | undefined): { label: string;
   if (!s) return null;
 
   if (s === 'active') {
-    return { label: 'Aktívna', cls: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+    return { label: 'Aktívna', cls: 'border-emerald-300/40 bg-emerald-500/15 text-emerald-200' };
   }
   if (s === 'terminated') {
-    return { label: 'Zrušená', cls: 'border-zinc-300 bg-zinc-100 text-zinc-700' };
+    return { label: 'Zrušená', cls: 'border-white/20 bg-white/5 text-slate-300' };
   }
 
-  return { label: status ?? '—', cls: 'border-zinc-200 bg-white text-zinc-700' };
+  return { label: status ?? '—', cls: 'border-white/10 bg-[#081025] text-slate-200' };
 }
 
 /* ---------- Collapsible section helper ---------- */
@@ -201,23 +201,23 @@ function CollapsibleSection({
   return (
     <details
       id={id}
-      className="group/section rounded-3xl border border-zinc-200 bg-white shadow-sm"
+      className="group/section glass-panel"
       open={defaultOpen}
     >
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-3xl px-4 py-4 sm:px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <div className="text-sm font-semibold text-zinc-900">{title}</div>
-            <span className="text-xs text-zinc-400">•</span>
-            <span className="text-xs text-zinc-500 group-open/section:hidden">zobraziť</span>
-            <span className="hidden text-xs text-zinc-500 group-open/section:inline">skryť</span>
+            <div className="text-sm font-semibold text-white">{title}</div>
+            <span className="text-xs text-slate-500">•</span>
+            <span className="text-xs text-slate-400 group-open/section:hidden">zobraziť</span>
+            <span className="hidden text-xs text-slate-400 group-open/section:inline">skryť</span>
           </div>
-          {subtitle ? <div className="mt-1 text-xs text-zinc-500">{subtitle}</div> : null}
+          {subtitle ? <div className="mt-1 text-xs text-slate-400">{subtitle}</div> : null}
         </div>
 
         <div className="flex items-center gap-3">
-          {right ? <div className="text-xs text-zinc-500">{right}</div> : null}
-          <div className="mt-0.5 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] text-zinc-600">
+          {right ? <div className="text-xs text-slate-400">{right}</div> : null}
+          <div className="mt-0.5 rounded-full border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-slate-300">
             <span className="group-open/section:hidden">+</span>
             <span className="hidden group-open/section:inline">–</span>
           </div>
@@ -246,10 +246,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Firma nenájdená</h1>
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-slate-300">
           Neexistuje záznam pre IČO: <span className="font-mono">{rawIco}</span>
         </p>
-        <Link href="/" className="text-sm">
+        <Link href="/" className="text-sm text-slate-200">
           Späť na vyhľadávanie
         </Link>
       </div>
@@ -280,7 +280,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <section className="rounded-3xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-6">
+      <section className="glass-panel p-4 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -293,21 +293,21 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               ) : null}
             </div>
 
-            <div className="mt-1 text-sm text-zinc-600">
-              <span className="font-medium text-zinc-700">IČO:</span> <span className="font-mono">{identity.ico}</span>
+            <div className="mt-1 text-sm text-slate-300">
+              <span className="font-medium text-slate-200">IČO:</span> <span className="font-mono">{identity.ico}</span>
               {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
             </div>
 
-            {identity.address ? <div className="mt-1 text-sm text-zinc-500">{identity.address}</div> : null}
+            {identity.address ? <div className="mt-1 text-sm text-slate-400">{identity.address}</div> : null}
 
           </div>
 
           <div className="grid w-full gap-3 sm:w-[520px]">
             {/* grade */}
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-right text-xs text-zinc-500">
-                  <div className="font-medium text-zinc-700">{latest?.fiscal_year ?? '—'}</div>
+                <div className="text-right text-xs text-slate-400">
+                  <div className="font-medium text-slate-200">{latest?.fiscal_year ?? '—'}</div>
                   <div>score {latest?.score_total ?? '—'}</div>
                 </div>
                 <GradeBadge grade={latest?.grade} />
@@ -317,12 +317,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             {/* risks: ML (old block) + SK model */}
             <div className="grid gap-3 sm:grid-cols-2">
               {/* ML = old explanation EXACTLY */}
-              <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
+              <div className="min-w-[260px] rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-right">
                 {pdLatestRaw ? (
                   <>
                     <div className="flex items-start justify-end gap-2">
                       <div>
-                        <div className="text-xs text-zinc-500">Rizikový percentil</div>
+                        <div className="text-xs text-slate-400">Rizikový percentil</div>
 
                         {typeof pdPct === 'number' ? (
                           <>
@@ -334,18 +334,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                         ) : (
                           <>
                             <div className="text-sm font-semibold">—</div>
-                            <div className="text-xs font-medium text-zinc-500">Percentil nie je dostupný</div>
+                            <div className="text-xs font-medium text-slate-400">Percentil nie je dostupný</div>
                           </>
                         )}
                       </div>
 
                       <div className="group relative mt-0.5">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-300 text-[11px] font-semibold text-zinc-600">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold text-slate-300">
                           i
                         </div>
 
-                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs leading-relaxed text-zinc-700 shadow-lg group-hover:block">
-                          <div className="font-medium text-zinc-900">Čo znamená percentil</div>
+                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl group-hover:block">
+                          <div className="font-medium text-white">Čo znamená percentil</div>
                           <div className="mt-1 leading-relaxed">
                             Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku.
                             {typeof pdPct === 'number' ? (
@@ -364,20 +364,20 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                     </div>
 
                     {typeof pdPct === 'number' ? (
-                      <div className="mt-2 text-xs text-zinc-500">
+                      <div className="mt-2 text-xs text-slate-400">
                         Patrí medzi{' '}
-                        <span className="font-medium text-zinc-700">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
+                        <span className="font-medium text-slate-200">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
                         najrizikovejších firiem v danom roku.
                       </div>
                     ) : null}
 
                     {typeof pd12 === 'number' ? (
                       <>
-                        <div className="mt-2 text-xs text-zinc-500">
+                        <div className="mt-2 text-xs text-slate-400">
                           Odhadovaná pravdepodobnosť bankrotu do 12 mesiacov:{' '}
-                          <span className="font-medium text-zinc-700">{fmtProb(pd12)}</span>
+                          <span className="font-medium text-slate-200">{fmtProb(pd12)}</span>
                         </div>
-                        <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                        <div className="mt-1 text-[11px] leading-relaxed text-slate-400">
                           Ide o štatistický odhad založený na historických dátach. Vzhľadom na nízku mieru bankrotov v
                           populácii bývajú tieto hodnoty prirodzene nízke.
                         </div>
@@ -386,9 +386,9 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                   </>
                 ) : (
                   <>
-                    <div className="text-xs text-zinc-500">Riziko bankrotu</div>
+                    <div className="text-xs text-slate-400">Riziko bankrotu</div>
                     <div className="mt-1 text-sm font-semibold">Nedostupné</div>
-                    <div className="mt-1 text-[11px] text-zinc-500">
+                    <div className="mt-1 text-[11px] text-slate-400">
                       Pre túto firmu zatiaľ nemáme ML predikciu (alebo sa nenačítala).
                     </div>
                   </>
@@ -396,10 +396,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               </div>
 
               {/* SK model */}
-              <div className="min-w-[260px] rounded-xl border border-zinc-200 bg-white px-4 py-3 text-right shadow-sm">
+              <div className="min-w-[260px] rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-right">
                 <div className="flex items-start justify-end gap-2">
                   <div>
-                    <div className="text-xs text-zinc-500">Riziko (SK model)</div>
+                    <div className="text-xs text-slate-400">Riziko (SK model)</div>
 
                     {typeof modelSk === 'number' ? (
                       <>
@@ -411,18 +411,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                     ) : (
                       <>
                         <div className="text-sm font-semibold">—</div>
-                        <div className="text-xs font-medium text-zinc-500">Nedostupné</div>
+                        <div className="text-xs font-medium text-slate-400">Nedostupné</div>
                       </>
                     )}
                   </div>
 
                   <div className="group relative mt-0.5">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-zinc-300 text-[11px] font-semibold text-zinc-600">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold text-slate-300">
                       i
                     </div>
 
-                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-zinc-200 bg-white p-3 text-left text-xs leading-relaxed text-zinc-700 shadow-lg group-hover:block">
-                      <div className="font-medium text-zinc-900">Slovenský bankrotový model</div>
+                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl group-hover:block">
+                      <div className="font-medium text-white">Slovenský bankrotový model</div>
                       <div className="mt-1 leading-relaxed">
                         Diskriminačný model (Gajdošíková et al., 2025). Používa lineárne skóre{' '}
                         <span className="font-medium">ySK</span> z pomerových ukazovateľov. Tu zobrazujeme výsledok
@@ -434,12 +434,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
                 {typeof modelSk === 'number' ? (
                   <>
-                    <div className="mt-2 text-xs text-zinc-500">
+                    <div className="mt-2 text-xs text-slate-400">
                       Patrí medzi{' '}
-                      <span className="font-medium text-zinc-700">{Math.max(1, 100 - fmtPercentile(modelSk))} %</span>{' '}
+                      <span className="font-medium text-slate-200">{Math.max(1, 100 - fmtPercentile(modelSk))} %</span>{' '}
                       najrizikovejších firiem v danom roku.
                     </div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                    <div className="mt-1 text-[11px] leading-relaxed text-slate-400">
                       Diskriminačný model navrhnutý pre slovenské podnikateľské prostredie (Gajdošíková et al., 2025).
                     </div>
                   </>
@@ -460,7 +460,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
           right={
             features?.fiscal_year ? (
               <span>
-                posledný rok: <span className="font-medium text-zinc-700">{features.fiscal_year}</span>
+                posledný rok: <span className="font-medium text-slate-200">{features.fiscal_year}</span>
                 {features.period_end ? <span> (k {features.period_end})</span> : null}
               </span>
             ) : (
@@ -596,14 +596,14 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-zinc-500">
+                  <tr className="text-left text-xs text-slate-400">
                     <th className="py-2 pr-4">Rok</th>
                     <th className="py-2 pr-4">Grade</th>
                     <th className="py-2 pr-4">Score</th>
                     <th className="py-2">Poznámka</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200">
+                <tbody className="divide-y divide-white/10">
                   {grades
                     .slice()
                     .reverse()
@@ -612,14 +612,14 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                         <td className="py-2 pr-4 font-medium">{g.fiscal_year}</td>
                         <td className="py-2 pr-4">{g.grade ?? '—'}</td>
                         <td className="py-2 pr-4">{fmtNum(g.score_total ?? null, 0)}</td>
-                        <td className="py-2 text-zinc-600">{(g as any).reason ?? ''}</td>
+                        <td className="py-2 text-slate-300">{(g as any).reason ?? ''}</td>
                       </tr>
                     ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-sm text-zinc-600">Pre túto firmu zatiaľ nie je dostupné skóre.</p>
+            <p className="text-sm text-slate-300">Pre túto firmu zatiaľ nie je dostupné skóre.</p>
           )}
         </CollapsibleSection>
       </div>
@@ -648,23 +648,23 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               {flags.map((f) => (
                 <div
                   key={f.k}
-                  className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
                 >
-                  <span className="text-zinc-700">{f.label}</span>
-                  <span className={`text-xs font-medium ${f.v ? 'text-zinc-900' : 'text-zinc-500'}`}>
+                  <span className="text-slate-200">{f.label}</span>
+                  <span className={`text-xs font-medium ${f.v ? 'text-white' : 'text-slate-400'}`}>
                     {f.v ? 'Áno' : 'Nie'}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-zinc-600">Features zatiaľ nie sú dostupné.</p>
+            <p className="text-sm text-slate-300">Features zatiaľ nie sú dostupné.</p>
           )}
         </CollapsibleSection>
       </div>
 
       <div>
-        <Link href="/" className="text-sm">
+        <Link href="/" className="text-sm text-slate-200">
           Späť na vyhľadávanie
         </Link>
       </div>

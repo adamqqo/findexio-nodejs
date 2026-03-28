@@ -3,19 +3,39 @@ import Link from 'next/link';
 
 export default function Header() {
   return (
-    <header className="border-b border-zinc-200 bg-white">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#030611]/75 backdrop-blur-xl">
       <div className="container flex items-center justify-between py-4">
         <Link href="/" className="no-underline">
           <div className="flex items-center gap-3">
-            <Image src="/logo.png" alt="Findexio" width={256} height={68} priority />
-            <div className="hidden sm:block text-xs text-zinc-500">
-              Prvý slovenský open-source finančný index
+            <Image
+              src="/logo-wordmark.svg"
+              alt="Findexio"
+              width={1180}
+              height={320}
+              priority
+              className="h-auto w-[190px] max-w-[56vw] object-contain sm:w-[260px] lg:w-[360px]"
+            />
+            <div className="hidden lg:block">
+              <div className="text-[11px] uppercase tracking-[0.25em] text-[#51c7e9]">Transparency, Valuability, Simplicity</div>
+              <div className="text-xs text-slate-300">Prvý slovenský open-source finančný index</div>
             </div>
           </div>
         </Link>
-        <nav className="text-sm text-zinc-600">
-          <a href="/api/health" className="no-underline text-zinc-600 hover:text-zinc-900">
-            health
+
+        <nav className="flex items-center gap-2 text-sm sm:gap-4">
+          <a
+            href="https://github.com/adamqqo/finance-rating-app"
+            target="_blank"
+            rel="noreferrer"
+            className="no-underline rounded-full border border-[#51c7e9]/40 bg-[#51c7e9]/10 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[#81d7ea] transition hover:border-[#51c7e9]/80 hover:text-white"
+          >
+            GitHub
+          </a>
+          <a
+            href="/api/health"
+            className="no-underline rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-200 transition hover:border-[#51c7e9]/60 hover:text-white"
+          >
+            API Health
           </a>
         </nav>
       </div>

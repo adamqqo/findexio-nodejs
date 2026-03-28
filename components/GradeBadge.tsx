@@ -4,19 +4,19 @@ export default function GradeBadge({ grade }: { grade?: string | null }) {
   const cls = (() => {
     switch (g) {
       case 'A':
-        return 'bg-zinc-900 text-white';
+        return 'border border-emerald-300/40 bg-emerald-400/15 text-emerald-200';
       case 'B':
-        return 'bg-zinc-800 text-white';
+        return 'border border-cyan-300/40 bg-cyan-400/15 text-cyan-200';
       case 'C':
-        return 'bg-zinc-700 text-white';
+        return 'border border-sky-300/40 bg-sky-400/15 text-sky-200';
       case 'D':
-        return 'bg-zinc-600 text-white';
+        return 'border border-yellow-300/40 bg-yellow-400/15 text-yellow-200';
       case 'E':
-        return 'bg-zinc-500 text-white';
+        return 'border border-orange-300/40 bg-orange-400/15 text-orange-200';
       case 'F':
-        return 'bg-zinc-950 text-white';
+        return 'border border-rose-300/40 bg-rose-400/15 text-rose-200';
       default:
-        return 'bg-white text-zinc-900 border border-zinc-300';
+        return 'border border-white/20 bg-white/10 text-white';
     }
   })();
 

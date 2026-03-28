@@ -1,4 +1,3 @@
-// components/TopCompanies.tsx
 import Link from 'next/link';
 import GradeBadge from './GradeBadge';
 
@@ -25,39 +24,37 @@ export default function TopCompanies({ items }: Props) {
   if (!items || items.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+    <section className="glass-panel p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-medium text-zinc-500">Ukážka</div>
-          <h2 className="mt-1 text-lg font-semibold text-zinc-900">
-            Top firmy podľa známky (2024)
-          </h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Zobrazuje iba výber z 25% najväčších firiem (tržby+majetok). Zoradené podľa známky, skóre podľa Kralicek Quick-Test (KQT), veľkosti firmy.
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Market leaders</div>
+          <h2 className="mt-1 text-xl font-semibold text-white">Top firmy podľa známky (2024)</h2>
+          <p className="mt-1 max-w-4xl text-sm text-slate-300">
+            Výber z 25 % najväčších spoločností (tržby + majetok), zoradené podľa známky, Kralicek Quick-Test skóre a veľkosti firmy.
           </p>
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200">
-        <ul className="divide-y divide-zinc-200">
+      <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+        <ul className="divide-y divide-white/10">
           {items.map((r) => (
-            <li key={r.ico} className="p-4">
+            <li key={r.ico} className="p-4 sm:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-zinc-900">
+                  <div className="text-sm font-semibold text-white">
                     <Link className="no-underline hover:underline" href={`/company/${encodeURIComponent(r.ico)}`}>
                       {r.name ?? '(bez názvu)'}
                     </Link>
                   </div>
-                  <div className="mt-1 text-xs text-zinc-500">
-                    <span className="font-medium text-zinc-700">IČO:</span> {r.ico}
+                  <div className="mt-1 text-xs text-slate-400">
+                    <span className="font-medium text-slate-200">IČO:</span> {r.ico}
                     {r.legal_form_name ? <span> • {r.legal_form_name}</span> : null}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="text-right text-xs text-zinc-500">
-                    <div className="font-medium text-zinc-700">{r.fiscal_year ?? '—'}</div>
+                  <div className="text-right text-xs text-slate-400">
+                    <div className="font-medium text-slate-200">{r.fiscal_year ?? '—'}</div>
                     <div>score {r.score_total ?? '—'}</div>
                   </div>
                   <GradeBadge grade={r.grade} />
