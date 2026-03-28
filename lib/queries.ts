@@ -236,6 +236,7 @@ export type BenchmarkContext = {
   ico: string;
   fiscal_year: number;
   nace_division: string | null;
+  nace_division_name: string | null;
   main_activity_code_id: string | null;
   main_activity_code_name: string | null;
   kraj: string | null;
@@ -280,6 +281,13 @@ export async function getCompanyBenchmarkContext(ico: string): Promise<Benchmark
       f.ico,
       f.fiscal_year,
       f.nace_division,
+      (
+        SELECT sd.main_activity_code_name
+        FROM core.sd_org sd
+        WHERE sd.ico = f.ico
+          AND sd.nace_division = f.nace_division
+        LIMIT 1
+      ) AS nace_division_name,
       f.main_activity_code_id,
       f.main_activity_code_name,
       f.kraj,
@@ -326,7 +334,7 @@ export async function getCompanyBenchmark(
   const sectorLabel =
     sectorLevel === 'main_activity_code_id'
       ? ctx.main_activity_code_name
-      : ctx.nace_division;
+      : ctx.nace_division_name ?? ctx.nace_division;
 
   let geoValue = 'Slovensko';
   let sql = '';
@@ -741,9 +749,169 @@ export async function getCompanyBenchmark(
     )
     SELECT
       r.*,
-      NULL::text AS leader_ico,
-      NULL::text AS leader_name,
-      NULL::float8 AS leader_value
+
+      -- leaders
+      CASE r.metric
+        WHEN 'current_ratio' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.current_ratio IS NOT NULL
+          ORDER BY g.current_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'equity_ratio' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.equity_ratio IS NOT NULL
+          ORDER BY g.equity_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'debt_ratio' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.debt_ratio IS NOT NULL
+          ORDER BY g.debt_ratio ASC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roa' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.roa IS NOT NULL
+          ORDER BY g.roa DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roe' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.roe IS NOT NULL
+          ORDER BY g.roe DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'net_margin' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.net_margin IS NOT NULL
+          ORDER BY g.net_margin DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'score_total' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.score_total IS NOT NULL
+          ORDER BY g.score_total DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'pd_pct' THEN (
+          SELECT g.ico FROM grp g
+          WHERE g.pd_pct IS NOT NULL
+          ORDER BY g.pd_pct ASC NULLS LAST
+          LIMIT 1
+        )
+      END AS leader_ico,
+
+      CASE r.metric
+        WHEN 'current_ratio' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.current_ratio IS NOT NULL
+          ORDER BY g.current_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'equity_ratio' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.equity_ratio IS NOT NULL
+          ORDER BY g.equity_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'debt_ratio' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.debt_ratio IS NOT NULL
+          ORDER BY g.debt_ratio ASC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roa' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.roa IS NOT NULL
+          ORDER BY g.roa DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roe' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.roe IS NOT NULL
+          ORDER BY g.roe DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'net_margin' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.net_margin IS NOT NULL
+          ORDER BY g.net_margin DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'score_total' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.score_total IS NOT NULL
+          ORDER BY g.score_total DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'pd_pct' THEN (
+          SELECT o.name FROM grp g
+          JOIN core.rpo_all_orgs o ON o.ico = g.ico
+          WHERE g.pd_pct IS NOT NULL
+          ORDER BY g.pd_pct ASC NULLS LAST
+          LIMIT 1
+        )
+      END AS leader_name,
+
+      CASE r.metric
+        WHEN 'current_ratio' THEN (
+          SELECT g.current_ratio FROM grp g
+          WHERE g.current_ratio IS NOT NULL
+          ORDER BY g.current_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'equity_ratio' THEN (
+          SELECT g.equity_ratio FROM grp g
+          WHERE g.equity_ratio IS NOT NULL
+          ORDER BY g.equity_ratio DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'debt_ratio' THEN (
+          SELECT g.debt_ratio FROM grp g
+          WHERE g.debt_ratio IS NOT NULL
+          ORDER BY g.debt_ratio ASC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roa' THEN (
+          SELECT g.roa FROM grp g
+          WHERE g.roa IS NOT NULL
+          ORDER BY g.roa DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'roe' THEN (
+          SELECT g.roe FROM grp g
+          WHERE g.roe IS NOT NULL
+          ORDER BY g.roe DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'net_margin' THEN (
+          SELECT g.net_margin FROM grp g
+          WHERE g.net_margin IS NOT NULL
+          ORDER BY g.net_margin DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'score_total' THEN (
+          SELECT g.score_total FROM grp g
+          WHERE g.score_total IS NOT NULL
+          ORDER BY g.score_total DESC NULLS LAST
+          LIMIT 1
+        )
+        WHEN 'pd_pct' THEN (
+          SELECT g.pd_pct FROM grp g
+          WHERE g.pd_pct IS NOT NULL
+          ORDER BY g.pd_pct ASC NULLS LAST
+          LIMIT 1
+        )
+      END AS leader_value
+
     FROM ranked r
   `;
 
