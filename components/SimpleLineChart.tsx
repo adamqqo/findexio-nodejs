@@ -9,7 +9,6 @@ type AutoUnitMode = 'plain' | 'eur';
 function autoScale(maxAbs: number, mode: AutoUnitMode) {
   const abs = Math.abs(maxAbs);
 
-  // plain: scale without currency suffix (good for ratios/score)
   if (mode === 'plain') {
     if (abs >= 1_000_000_000) return { div: 1_000_000_000, suffix: ' mld.', digits: 2 };
     if (abs >= 1_000_000) return { div: 1_000_000, suffix: ' mil.', digits: 1 };
@@ -17,7 +16,6 @@ function autoScale(maxAbs: number, mode: AutoUnitMode) {
     return { div: 1, suffix: '', digits: 0 };
   }
 
-  // eur: scale with € suffix
   if (abs >= 1_000_000_000) return { div: 1_000_000_000, suffix: ' mld. €', digits: 2 };
   if (abs >= 1_000_000) return { div: 1_000_000, suffix: ' mil. €', digits: 1 };
   if (abs >= 1_000) return { div: 1_000, suffix: ' tis. €', digits: 1 };
@@ -62,36 +60,27 @@ export default function SimpleLineChart({
   subtitle,
   points,
   height = 160,
-
-  // axis control
   autoUnit = 'plain',
   yScaleDivisor = 1,
   ySuffix = '',
   yFractionDigits = 1,
-
   tooltipValueFormatter
 }: {
   title: string;
   subtitle?: string;
   points: Point[];
   height?: number;
-
   autoUnit?: AutoUnitMode;
-
   yScaleDivisor?: number;
   ySuffix?: string;
   yFractionDigits?: number;
   tooltipValueFormatter?: (rawY: number) => string;
 }) {
   const width = 640;
-
   const padL = 56;
   const padR = 12;
   const padT = 12;
   const padB = 30;
-
-  const VB_W = width;
-  const VB_H = height;
 
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -154,7 +143,6 @@ export default function SimpleLineChart({
     [yMinRaw, yMaxRaw]
   );
 
-  // If caller sets suffix/divisor explicitly (like % or score), do NOT use auto scaling.
   const useCustomAxis = (ySuffix && ySuffix.trim() !== '') || yScaleDivisor !== 1;
 
   const auto = useMemo(() => {
@@ -184,27 +172,27 @@ export default function SimpleLineChart({
     return `${formatNumberSK(scaled, Math.max(auto.digits, 2))}${auto.suffix}`;
   };
 
-  const [hover, setHover] = useState<{
-    year: number;
-    rawY: number;
-    cx: number;
-    cy: number;
-    mouseX: number;
-    mouseY: number;
-  } | null>(null);
+  const [hover, setHover] = useState<{ year: number; rawY: number; cx: number; cy: number } | null>(null);
 
   function onMouseMove(e: React.MouseEvent<SVGSVGElement>) {
     if (!svgRef.current || validPoints.length === 0) return;
 
-    const rect = svgRef.current.getBoundingClientRect();
-    const mx = ((e.clientX - rect.left) / rect.width) * VB_W;
+    const svg = svgRef.current;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+
+    const cursor = pt.matrixTransform(ctm.inverse());
 
     let best = validPoints[0];
     let bestDx = Infinity;
 
     for (const p of validPoints) {
       const px = xScale(p.x);
-      const dx = Math.abs(px - mx);
+      const dx = Math.abs(px - cursor.x);
 
       if (dx < bestDx) {
         bestDx = dx;
@@ -212,16 +200,11 @@ export default function SimpleLineChart({
       }
     }
 
-    const cx = xScale(best.x);
-    const cy = yScale(best.y);
-
     setHover({
       year: best.x,
       rawY: best.y,
-      cx,
-      cy,
-      mouseX: e.clientX,
-      mouseY: e.clientY
+      cx: xScale(best.x),
+      cy: yScale(best.y)
     });
   }
 
@@ -251,7 +234,7 @@ export default function SimpleLineChart({
           <svg
             ref={svgRef}
             viewBox={`0 0 ${width} ${height}`}
-            className="min-w-[560px]"
+            className="min-w-[560px] w-full"
             onMouseMove={onMouseMove}
             onMouseLeave={onMouseLeave}
           >
@@ -296,62 +279,18 @@ export default function SimpleLineChart({
                   stroke="rgba(148,163,184,0.35)"
                   strokeDasharray="4 4"
                 />
-
                 <circle cx={hover.cx} cy={hover.cy} r="5" fill="#081025" stroke="#51c7e9" strokeWidth="2" />
+
+                <g transform={`translate(${Math.min(width - 155, hover.cx + 10)} ${Math.max(18, hover.cy - 34)})`}>
+                  <rect width="145" height="30" rx="8" fill="#081025" stroke="rgba(148,163,184,0.35)" />
+                  <text x="8" y="12" fontSize="10" fill="#cbd5e1">{hover.year}</text>
+                  <text x="8" y="24" fontSize="11" fill="#f8fafc">{formatTooltip(hover.rawY)}</text>
+                </g>
               </g>
             ) : null}
           </svg>
         </div>
       )}
-
-      {hover ? <TooltipFollowCursor hover={hover} formatTooltip={formatTooltip} /> : null}
-    </div>
-  );
-}
-
-function TooltipFollowCursor({
-  hover,
-  formatTooltip
-}: {
-  hover: {
-    year: number;
-    rawY: number;
-    mouseX: number;
-    mouseY: number;
-  };
-  formatTooltip: (raw: number) => string;
-}) {
-  const tooltipRef = React.useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = React.useState({ left: 0, top: 0 });
-
-  React.useEffect(() => {
-    if (!tooltipRef.current) return;
-
-    const padding = 12;
-    const tooltipWidth = tooltipRef.current.offsetWidth;
-    const tooltipHeight = tooltipRef.current.offsetHeight;
-
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    let left = hover.mouseX + 14;
-    let top = hover.mouseY - tooltipHeight - 14;
-
-    if (left + tooltipWidth > viewportWidth - padding) left = hover.mouseX - tooltipWidth - 14;
-    if (top < padding) top = hover.mouseY + 14;
-    if (top + tooltipHeight > viewportHeight - padding) top = Math.max(padding, viewportHeight - padding - tooltipHeight);
-
-    setPos({ left, top });
-  }, [hover]);
-
-  return (
-    <div
-      ref={tooltipRef}
-      className="pointer-events-none fixed z-50 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs shadow-lg"
-      style={{ left: pos.left, top: pos.top }}
-    >
-      <div className="font-medium text-white">{hover.year}</div>
-      <div className="text-slate-300">{formatTooltip(hover.rawY)}</div>
     </div>
   );
 }

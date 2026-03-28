@@ -7,9 +7,14 @@ export default function Header() {
       <div className="container flex items-center justify-between py-4">
         <Link href="/" className="no-underline">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-2 shadow-[0_0_20px_rgba(33,125,130,0.2)]">
-              <Image src="/logo-wordmark.svg" alt="Findexio" width={240} height={69} priority className="h-auto w-[150px] sm:w-[240px]" />
-            </div>
+            <Image
+              src="/logo-wordmark.svg"
+              alt="Findexio"
+              width={320}
+              height={92}
+              priority
+              className="h-auto w-[190px] object-contain sm:w-[320px]"
+            />
             <div className="hidden lg:block">
               <div className="text-[11px] uppercase tracking-[0.25em] text-[#51c7e9]">Financial Intelligence</div>
               <div className="text-xs text-slate-300">Prvý slovenský open-source finančný index</div>
