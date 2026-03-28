@@ -1,4 +1,3 @@
-// components/TopCompaniesClient.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -32,21 +31,19 @@ export default function TopCompaniesClient() {
 
   if (items === null) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="text-xs font-medium text-zinc-500">Ukážka</div>
-        <div className="mt-2 text-sm text-zinc-600">Načítavam top firmy…</div>
+      <section className="panel p-5">
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300/70">Ukážka</div>
+        <div className="mt-2 text-sm text-slate-200">Načítavam top firmy…</div>
       </section>
     );
   }
 
   if (error) {
     return (
-      <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <div className="text-xs font-medium text-zinc-500">Ukážka</div>
-        <div className="mt-2 text-sm text-zinc-600">Top firmy sa nepodarilo načítať.</div>
-        <pre className="mt-3 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700">
-          {error}
-        </pre>
+      <section className="panel p-5">
+        <div className="text-xs font-medium uppercase tracking-[0.2em] text-slate-300/70">Ukážka</div>
+        <div className="mt-2 text-sm text-rose-200">Top firmy sa nepodarilo načítať.</div>
+        <pre className="mt-3 overflow-auto rounded-xl border border-rose-300/30 bg-rose-500/10 p-3 text-xs text-rose-100">{error}</pre>
       </section>
     );
   }
