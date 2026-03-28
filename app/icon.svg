@@ -16,6 +16,6 @@
 
   <rect x="48" y="36" width="314" height="100" rx="14" fill="url(#navyGrad)"/>
   <rect x="48" y="186" width="282" height="100" rx="14" fill="url(#tealGrad)"/>
-  <rect x="48" y="322" width="90" height="154" rx="14" fill="url(#navyGrad)"/>
-  <rect x="162" y="322" width="110" height="110" rx="14" fill="url(#goldGrad)"/>
+  <rect x="48" y="322" width="110" height="110" rx="14" fill="url(#navyGrad)"/>
+  <rect x="178" y="322" width="110" height="110" rx="14" fill="url(#goldGrad)"/>
 </svg>

@@ -16,7 +16,7 @@
 
   <rect x="6" y="10" width="246" height="66" rx="10" fill="url(#navyGrad)"/>
   <rect x="6" y="100" width="190" height="66" rx="10" fill="url(#tealGrad)"/>
-  <rect x="6" y="188" width="72" height="82" rx="10" fill="url(#navyGrad)"/>
+  <rect x="6" y="188" width="72" height="72" rx="10" fill="url(#navyGrad)"/>
   <rect x="94" y="188" width="72" height="72" rx="10" fill="url(#goldGrad)"/>
 
   <text x="280" y="218" fill="#1D4B86" font-family="Open Sans, Segoe UI, Arial, sans-serif" font-size="184" font-weight="700" letter-spacing="-2">Findexio</text>
