@@ -4,37 +4,20 @@
 
 :root {
   color-scheme: light;
-  --fx-navy: #1d2d49;
-  --fx-teal: #217d82;
-  --fx-gold: #f5be42;
-  --fx-bg: #f5f8fc;
 }
 
-html,
-body {
+html, body {
   height: 100%;
 }
 
 body {
-  @apply antialiased text-slate-900;
-  background:
-    radial-gradient(1000px 500px at -10% -15%, rgba(33, 125, 130, 0.18), transparent 60%),
-    radial-gradient(900px 480px at 110% -20%, rgba(29, 45, 73, 0.14), transparent 62%),
-    linear-gradient(180deg, #f9fbff 0%, var(--fx-bg) 55%, #eef3f9 100%);
+  @apply bg-white text-zinc-900 antialiased;
 }
 
 a {
-  @apply text-slate-900 underline underline-offset-4 decoration-slate-300 hover:decoration-slate-900;
+  @apply text-zinc-900 underline underline-offset-4 decoration-zinc-300 hover:decoration-zinc-900;
 }
 
 .container {
   @apply mx-auto max-w-6xl px-4;
-}
-
-.fx-card {
-  @apply rounded-3xl border border-white/70 bg-white/90 shadow-[0_12px_30px_rgba(14,32,63,0.09)] backdrop-blur;
-}
-
-.fx-pill {
-  @apply inline-flex items-center rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600;
 }
