@@ -74,7 +74,7 @@ export default function SimpleLineChart({
   yScaleDivisor?: number;
   ySuffix?: string;
   yFractionDigits?: number;
-  tooltipValueFormatter?: (rawY: number) => string;
+    tooltipValueFormatter?: (rawY: number) => string;
 }) {
   const width = 640;
   const padL = 56;

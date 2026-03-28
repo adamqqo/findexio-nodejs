@@ -16,7 +16,7 @@ export default function Header() {
               className="h-auto w-[190px] max-w-[56vw] object-contain sm:w-[260px] lg:w-[360px]"
             />
             <div className="hidden lg:block">
-              <div className="text-[11px] uppercase tracking-[0.25em] text-[#51c7e9]">Financial Intelligence</div>
+              <div className="text-[11px] uppercase tracking-[0.25em] text-[#51c7e9]">Transparency, Valuability, Simplicity</div>
               <div className="text-xs text-slate-300">Prvý slovenský open-source finančný index</div>
             </div>
           </div>

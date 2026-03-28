@@ -27,7 +27,7 @@ export default function TopCompanies({ items }: Props) {
     <section className="glass-panel p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Market movers</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Market leaders</div>
           <h2 className="mt-1 text-xl font-semibold text-white">Top firmy podľa známky (2024)</h2>
           <p className="mt-1 max-w-4xl text-sm text-slate-300">
             Výber z 25 % najväčších spoločností (tržby + majetok), zoradené podľa známky, Kralicek Quick-Test skóre a veľkosti firmy.
