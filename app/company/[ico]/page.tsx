@@ -43,10 +43,10 @@ function toNum(x: unknown): number | null {
 /* ---------- RISK LOGIC BASED ON PERCENTILE ---------- */
 
 function riskLabelFromPct(pd_pct: number) {
-  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-emerald-300' };
-  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-300' };
-  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-300' };
-  return { label: 'Vysoké riziko', color: 'text-rose-300' };
+  if (pd_pct < 0.5) return { label: 'Nízke riziko', color: 'text-emerald-700 dark:text-emerald-300' };
+  if (pd_pct < 0.8) return { label: 'Stredné riziko', color: 'text-yellow-700 dark:text-yellow-300' };
+  if (pd_pct < 0.95) return { label: 'Zvýšené riziko', color: 'text-orange-700 dark:text-orange-300' };
+  return { label: 'Vysoké riziko', color: 'text-rose-700 dark:text-rose-300' };
 }
 
 function fmtPercentile(pd_pct: number) {
@@ -172,13 +172,13 @@ function companyStatusBadge(status: string | null | undefined): { label: string;
   if (!s) return null;
 
   if (s === 'active') {
-    return { label: 'Aktívna', cls: 'border-emerald-300/40 bg-emerald-500/15 text-emerald-200' };
+    return { label: 'Aktívna', cls: 'border-emerald-400/50 bg-emerald-500/20 text-emerald-800 dark:border-emerald-300/40 dark:bg-emerald-500/15 dark:text-emerald-200' };
   }
   if (s === 'terminated') {
-    return { label: 'Zrušená', cls: 'border-white/20 bg-white/5 text-slate-300' };
+    return { label: 'Zrušená', cls: 'border-slate-900/20 bg-slate-900/5 text-slate-700 dark:border-white/20 dark:bg-white/5 dark:text-slate-300' };
   }
 
-  return { label: status ?? '—', cls: 'border-white/10 bg-[#081025] text-slate-200' };
+  return { label: status ?? '—', cls: 'border-slate-900/10 bg-white text-slate-800 dark:border-white/10 dark:bg-[#081025] dark:text-slate-200' };
 }
 
 /* ---------- Collapsible section helper ---------- */
@@ -207,17 +207,17 @@ function CollapsibleSection({
       <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-3xl px-4 py-4 sm:px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <div className="text-sm font-semibold text-white">{title}</div>
-            <span className="text-xs text-slate-500">•</span>
-            <span className="text-xs text-slate-400 group-open/section:hidden">zobraziť</span>
-            <span className="hidden text-xs text-slate-400 group-open/section:inline">skryť</span>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+            <span className="text-xs text-slate-500 dark:text-slate-500">•</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 group-open/section:hidden">zobraziť</span>
+            <span className="hidden text-xs text-slate-600 dark:text-slate-400 group-open/section:inline">skryť</span>
           </div>
-          {subtitle ? <div className="mt-1 text-xs text-slate-400">{subtitle}</div> : null}
+          {subtitle ? <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">{subtitle}</div> : null}
         </div>
 
         <div className="flex items-center gap-3">
-          {right ? <div className="text-xs text-slate-400">{right}</div> : null}
-          <div className="mt-0.5 rounded-full border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-slate-300">
+          {right ? <div className="text-xs text-slate-600 dark:text-slate-400">{right}</div> : null}
+          <div className="mt-0.5 rounded-full border border-slate-900/20 dark:border-white/15 bg-white/70 dark:bg-white/5 px-2 py-1 text-[11px] text-slate-700 dark:text-slate-300">
             <span className="group-open/section:hidden">+</span>
             <span className="hidden group-open/section:inline">–</span>
           </div>
@@ -246,10 +246,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Firma nenájdená</h1>
-        <p className="text-sm text-slate-300">
+        <p className="text-sm text-slate-700 dark:text-slate-300">
           Neexistuje záznam pre IČO: <span className="font-mono">{rawIco}</span>
         </p>
-        <Link href="/" className="text-sm text-slate-200">
+        <Link href="/" className="text-sm text-slate-800 dark:text-slate-200">
           Späť na vyhľadávanie
         </Link>
       </div>
@@ -293,21 +293,21 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               ) : null}
             </div>
 
-            <div className="mt-1 text-sm text-slate-300">
-              <span className="font-medium text-slate-200">IČO:</span> <span className="font-mono">{identity.ico}</span>
+            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-800 dark:text-slate-200">IČO:</span> <span className="font-mono">{identity.ico}</span>
               {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
             </div>
 
-            {identity.address ? <div className="mt-1 text-sm text-slate-400">{identity.address}</div> : null}
+            {identity.address ? <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{identity.address}</div> : null}
 
           </div>
 
           <div className="grid w-full gap-3 sm:w-[520px]">
             {/* grade */}
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <div className="rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/20 p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-right text-xs text-slate-400">
-                  <div className="font-medium text-slate-200">{latest?.fiscal_year ?? '—'}</div>
+                <div className="text-right text-xs text-slate-600 dark:text-slate-400">
+                  <div className="font-medium text-slate-800 dark:text-slate-200">{latest?.fiscal_year ?? '—'}</div>
                   <div>score {latest?.score_total ?? '—'}</div>
                 </div>
                 <GradeBadge grade={latest?.grade} />
@@ -317,12 +317,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             {/* risks: ML (old block) + SK model */}
             <div className="grid gap-3 sm:grid-cols-2">
               {/* ML = old explanation EXACTLY */}
-              <div className="min-w-[260px] rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-right">
+              <div className="min-w-[260px] rounded-xl border border-slate-900/10 dark:border-white/10 bg-slate-900/10 dark:bg-black/25 px-4 py-3 text-right">
                 {pdLatestRaw ? (
                   <>
                     <div className="flex items-start justify-end gap-2">
                       <div>
-                        <div className="text-xs text-slate-400">Rizikový percentil</div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400">Rizikový percentil</div>
 
                         {typeof pdPct === 'number' ? (
                           <>
@@ -334,18 +334,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                         ) : (
                           <>
                             <div className="text-sm font-semibold">—</div>
-                            <div className="text-xs font-medium text-slate-400">Percentil nie je dostupný</div>
+                            <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Percentil nie je dostupný</div>
                           </>
                         )}
                       </div>
 
                       <div className="group relative mt-0.5">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold text-slate-300">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-900/20 text-[11px] font-semibold text-slate-700 dark:border-white/20 dark:text-slate-300">
                           i
                         </div>
 
-                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl group-hover:block">
-                          <div className="font-medium text-white">Čo znamená percentil</div>
+                        <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-slate-900/10 dark:border-white/10 bg-white dark:bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-700 dark:text-slate-300 shadow-xl group-hover:block">
+                          <div className="font-medium text-slate-900 dark:text-white">Čo znamená percentil</div>
                           <div className="mt-1 leading-relaxed">
                             Percentil vyjadruje relatívne postavenie firmy medzi všetkými firmami v danom roku.
                             {typeof pdPct === 'number' ? (
@@ -364,20 +364,20 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                     </div>
 
                     {typeof pdPct === 'number' ? (
-                      <div className="mt-2 text-xs text-slate-400">
+                      <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                         Patrí medzi{' '}
-                        <span className="font-medium text-slate-200">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{Math.max(1, 100 - fmtPercentile(pdPct))} %</span>{' '}
                         najrizikovejších firiem v danom roku.
                       </div>
                     ) : null}
 
                     {typeof pd12 === 'number' ? (
                       <>
-                        <div className="mt-2 text-xs text-slate-400">
+                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                           Odhadovaná pravdepodobnosť bankrotu do 12 mesiacov:{' '}
-                          <span className="font-medium text-slate-200">{fmtProb(pd12)}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{fmtProb(pd12)}</span>
                         </div>
-                        <div className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                        <div className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
                           Ide o štatistický odhad založený na historických dátach. Vzhľadom na nízku mieru bankrotov v
                           populácii bývajú tieto hodnoty prirodzene nízke.
                         </div>
@@ -386,9 +386,9 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                   </>
                 ) : (
                   <>
-                    <div className="text-xs text-slate-400">Riziko bankrotu</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Riziko bankrotu</div>
                     <div className="mt-1 text-sm font-semibold">Nedostupné</div>
-                    <div className="mt-1 text-[11px] text-slate-400">
+                    <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
                       Pre túto firmu zatiaľ nemáme ML predikciu (alebo sa nenačítala).
                     </div>
                   </>
@@ -396,10 +396,10 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               </div>
 
               {/* SK model */}
-              <div className="min-w-[260px] rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-right">
+              <div className="min-w-[260px] rounded-xl border border-slate-900/10 dark:border-white/10 bg-slate-900/10 dark:bg-black/25 px-4 py-3 text-right">
                 <div className="flex items-start justify-end gap-2">
                   <div>
-                    <div className="text-xs text-slate-400">Riziko (SK model)</div>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">Riziko (SK model)</div>
 
                     {typeof modelSk === 'number' ? (
                       <>
@@ -411,18 +411,18 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                     ) : (
                       <>
                         <div className="text-sm font-semibold">—</div>
-                        <div className="text-xs font-medium text-slate-400">Nedostupné</div>
+                        <div className="text-xs font-medium text-slate-600 dark:text-slate-400">Nedostupné</div>
                       </>
                     )}
                   </div>
 
                   <div className="group relative mt-0.5">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] font-semibold text-slate-300">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-900/20 text-[11px] font-semibold text-slate-700 dark:border-white/20 dark:text-slate-300">
                       i
                     </div>
 
-                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-300 shadow-xl group-hover:block">
-                      <div className="font-medium text-white">Slovenský bankrotový model</div>
+                    <div className="pointer-events-none absolute right-0 top-6 z-10 hidden w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl border border-slate-900/10 dark:border-white/10 bg-white dark:bg-[#081025] p-3 text-left text-xs leading-relaxed text-slate-700 dark:text-slate-300 shadow-xl group-hover:block">
+                      <div className="font-medium text-slate-900 dark:text-white">Slovenský bankrotový model</div>
                       <div className="mt-1 leading-relaxed">
                         Diskriminačný model (Gajdošíková et al., 2025). Používa lineárne skóre{' '}
                         <span className="font-medium">ySK</span> z pomerových ukazovateľov. Tu zobrazujeme výsledok
@@ -434,12 +434,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
                 {typeof modelSk === 'number' ? (
                   <>
-                    <div className="mt-2 text-xs text-slate-400">
+                    <div className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                       Patrí medzi{' '}
-                      <span className="font-medium text-slate-200">{Math.max(1, 100 - fmtPercentile(modelSk))} %</span>{' '}
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{Math.max(1, 100 - fmtPercentile(modelSk))} %</span>{' '}
                       najrizikovejších firiem v danom roku.
                     </div>
-                    <div className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                    <div className="mt-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
                       Diskriminačný model navrhnutý pre slovenské podnikateľské prostredie (Gajdošíková et al., 2025).
                     </div>
                   </>
@@ -460,7 +460,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
           right={
             features?.fiscal_year ? (
               <span>
-                posledný rok: <span className="font-medium text-slate-200">{features.fiscal_year}</span>
+                posledný rok: <span className="font-medium text-slate-800 dark:text-slate-200">{features.fiscal_year}</span>
                 {features.period_end ? <span> (k {features.period_end})</span> : null}
               </span>
             ) : (
@@ -596,14 +596,14 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-400">
+                  <tr className="text-left text-xs text-slate-600 dark:text-slate-400">
                     <th className="py-2 pr-4">Rok</th>
                     <th className="py-2 pr-4">Grade</th>
                     <th className="py-2 pr-4">Score</th>
                     <th className="py-2">Poznámka</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className="divide-y divide-slate-900/10 dark:divide-white/10">
                   {grades
                     .slice()
                     .reverse()
@@ -612,14 +612,14 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
                         <td className="py-2 pr-4 font-medium">{g.fiscal_year}</td>
                         <td className="py-2 pr-4">{g.grade ?? '—'}</td>
                         <td className="py-2 pr-4">{fmtNum(g.score_total ?? null, 0)}</td>
-                        <td className="py-2 text-slate-300">{(g as any).reason ?? ''}</td>
+                        <td className="py-2 text-slate-700 dark:text-slate-300">{(g as any).reason ?? ''}</td>
                       </tr>
                     ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-sm text-slate-300">Pre túto firmu zatiaľ nie je dostupné skóre.</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300">Pre túto firmu zatiaľ nie je dostupné skóre.</p>
           )}
         </CollapsibleSection>
       </div>
@@ -648,23 +648,23 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
               {flags.map((f) => (
                 <div
                   key={f.k}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-xl border border-slate-900/10 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-2 text-sm"
                 >
-                  <span className="text-slate-200">{f.label}</span>
-                  <span className={`text-xs font-medium ${f.v ? 'text-white' : 'text-slate-400'}`}>
+                  <span className="text-slate-800 dark:text-slate-200">{f.label}</span>
+                  <span className={`text-xs font-medium ${f.v ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                     {f.v ? 'Áno' : 'Nie'}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-300">Features zatiaľ nie sú dostupné.</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300">Features zatiaľ nie sú dostupné.</p>
           )}
         </CollapsibleSection>
       </div>
 
       <div>
-        <Link href="/" className="text-sm text-slate-200">
+        <Link href="/" className="text-sm text-slate-800 dark:text-slate-200">
           Späť na vyhľadávanie
         </Link>
       </div>

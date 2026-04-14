@@ -174,10 +174,10 @@ useEffect(() => {
 
   if (error) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-black/20 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold">Grafy</h2>
-        <div className="mt-2 text-sm text-slate-300">Grafy sa nepodarilo načítať.</div>
-        <pre className="mt-3 overflow-auto rounded-lg border border-white/10 bg-[#081025] p-3 text-xs text-slate-300">
+      <section className="rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/20 p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Grafy</h2>
+        <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">Grafy sa nepodarilo načítať.</div>
+        <pre className="mt-3 overflow-auto rounded-lg border border-slate-900/10 dark:border-white/10 bg-white dark:bg-[#081025] p-3 text-xs text-slate-700 dark:text-slate-300">
           {error}
         </pre>
       </section>
@@ -186,9 +186,9 @@ useEffect(() => {
 
   if (!hasAnyData) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-black/20 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold">Grafy</h2>
-        <div className="mt-2 text-sm text-slate-300">Nie sú dostupné dáta pre grafy.</div>
+      <section className="rounded-2xl border border-slate-900/10 dark:border-white/10 bg-slate-900/5 dark:bg-black/20 p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Grafy</h2>
+        <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">Nie sú dostupné dáta pre grafy.</div>
       </section>
     );
   }
@@ -199,8 +199,8 @@ useEffect(() => {
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between">
-        <h2 className="text-sm font-semibold">Grafy (vývoj v čase)</h2>
-        <div className="text-xs text-slate-400">norm_period = 1</div>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Grafy (vývoj v čase)</h2>
+        <div className="text-xs text-slate-600 dark:text-slate-400">norm_period = 1</div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
