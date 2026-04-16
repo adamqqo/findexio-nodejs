@@ -37,8 +37,13 @@ const organizationJsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="sk">
+    <html lang="sk" suppressHydrationWarning>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k="findexio-theme";var s=localStorage.getItem(k);var d=window.matchMedia("(prefers-color-scheme: dark)").matches;var t=s||(d?"dark":"light");document.documentElement.classList.toggle("dark",t==="dark");}catch(e){}})();`
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -50,12 +55,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <main className="container py-8 sm:py-12">{children}</main>
 
-        <footer className="border-t border-white/10 bg-[#040710]/80 backdrop-blur">
-          <div className="container flex flex-col gap-2 py-8 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="border-t border-slate-900/10 bg-white/70 backdrop-blur dark:border-white/10 dark:bg-[#040710]/80">
+          <div className="container flex flex-col gap-2 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between dark:text-slate-400">
             <span>
-              <span className="font-semibold text-white">Findexio</span> • Open-source finančný index
+              <span className="font-semibold text-slate-900 dark:text-white">Findexio</span> • Open-source finančný index
             </span>
-            <span className="text-xs uppercase tracking-[0.2em] text-[#51c7e9]">Built for smarter decisions</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-[#217d82] dark:text-[#51c7e9]">Built for smarter decisions</span>
           </div>
         </footer>
       </body>

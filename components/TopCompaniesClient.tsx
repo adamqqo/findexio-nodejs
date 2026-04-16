@@ -32,8 +32,8 @@ export default function TopCompaniesClient() {
   if (items === null) {
     return (
       <section className="glass-panel p-5 sm:p-6">
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Market movers</div>
-        <div className="mt-2 text-sm text-slate-300">Načítavam top firmy…</div>
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-400">Market movers</div>
+        <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">Načítavam top firmy…</div>
       </section>
     );
   }
@@ -41,9 +41,9 @@ export default function TopCompaniesClient() {
   if (error) {
     return (
       <section className="glass-panel p-5 sm:p-6">
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Market movers</div>
-        <div className="mt-2 text-sm text-slate-300">Top firmy sa nepodarilo načítať.</div>
-        <pre className="mt-3 overflow-auto rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-slate-300">
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-slate-400">Market movers</div>
+        <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">Top firmy sa nepodarilo načítať.</div>
+        <pre className="mt-3 overflow-auto rounded-xl border border-slate-900/10 dark:border-white/10 bg-slate-900/10 dark:bg-black/30 p-3 text-xs text-slate-700 dark:text-slate-300">
           {error}
         </pre>
       </section>
