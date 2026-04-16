@@ -500,30 +500,35 @@ export async function getCompanyBenchmark(
           WHEN 'equity_ratio' THEN (
             SELECT g.ico FROM grp g
             WHERE g.equity_ratio IS NOT NULL
+              AND g.equity_ratio BETWEEN 0 AND 1
             ORDER BY g.equity_ratio DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'debt_ratio' THEN (
             SELECT g.ico FROM grp g
             WHERE g.debt_ratio IS NOT NULL
+              AND g.debt_ratio BETWEEN 0 AND 1
             ORDER BY g.debt_ratio ASC NULLS LAST
             LIMIT 1
           )
           WHEN 'roa' THEN (
             SELECT g.ico FROM grp g
             WHERE g.roa IS NOT NULL
+              AND ABS(g.roa) <= 5
             ORDER BY g.roa DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'roe' THEN (
             SELECT g.ico FROM grp g
             WHERE g.roe IS NOT NULL
+              AND ABS(g.roe) <= 5
             ORDER BY g.roe DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'net_margin' THEN (
             SELECT g.ico FROM grp g
             WHERE g.net_margin IS NOT NULL
+              AND ABS(g.net_margin) <= 5
             ORDER BY g.net_margin DESC NULLS LAST
             LIMIT 1
           )
@@ -536,6 +541,7 @@ export async function getCompanyBenchmark(
           WHEN 'pd_pct' THEN (
             SELECT g.ico FROM grp g
             WHERE g.pd_pct IS NOT NULL
+              AND g.pd_pct BETWEEN 0 AND 1
             ORDER BY g.pd_pct ASC NULLS LAST
             LIMIT 1
           )
@@ -553,6 +559,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.equity_ratio IS NOT NULL
+              AND g.equity_ratio BETWEEN 0 AND 1
             ORDER BY g.equity_ratio DESC NULLS LAST
             LIMIT 1
           )
@@ -560,6 +567,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.debt_ratio IS NOT NULL
+              AND g.debt_ratio BETWEEN 0 AND 1
             ORDER BY g.debt_ratio ASC NULLS LAST
             LIMIT 1
           )
@@ -567,6 +575,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.roa IS NOT NULL
+              AND ABS(g.roa) <= 5
             ORDER BY g.roa DESC NULLS LAST
             LIMIT 1
           )
@@ -574,6 +583,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.roe IS NOT NULL
+              AND ABS(g.roe) <= 5
             ORDER BY g.roe DESC NULLS LAST
             LIMIT 1
           )
@@ -581,6 +591,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.net_margin IS NOT NULL
+              AND ABS(g.net_margin) <= 5
             ORDER BY g.net_margin DESC NULLS LAST
             LIMIT 1
           )
@@ -595,6 +606,7 @@ export async function getCompanyBenchmark(
             SELECT o.name FROM grp g
             JOIN core.rpo_all_orgs o ON o.ico = g.ico
             WHERE g.pd_pct IS NOT NULL
+              AND g.pd_pct BETWEEN 0 AND 1
             ORDER BY g.pd_pct ASC NULLS LAST
             LIMIT 1
           )
@@ -610,30 +622,35 @@ export async function getCompanyBenchmark(
           WHEN 'equity_ratio' THEN (
             SELECT g.equity_ratio FROM grp g
             WHERE g.equity_ratio IS NOT NULL
+              AND g.equity_ratio BETWEEN 0 AND 1
             ORDER BY g.equity_ratio DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'debt_ratio' THEN (
             SELECT g.debt_ratio FROM grp g
             WHERE g.debt_ratio IS NOT NULL
+              AND g.debt_ratio BETWEEN 0 AND 1
             ORDER BY g.debt_ratio ASC NULLS LAST
             LIMIT 1
           )
           WHEN 'roa' THEN (
             SELECT g.roa FROM grp g
             WHERE g.roa IS NOT NULL
+              AND ABS(g.roa) <= 5
             ORDER BY g.roa DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'roe' THEN (
             SELECT g.roe FROM grp g
             WHERE g.roe IS NOT NULL
+              AND ABS(g.roe) <= 5
             ORDER BY g.roe DESC NULLS LAST
             LIMIT 1
           )
           WHEN 'net_margin' THEN (
             SELECT g.net_margin FROM grp g
             WHERE g.net_margin IS NOT NULL
+              AND ABS(g.net_margin) <= 5
             ORDER BY g.net_margin DESC NULLS LAST
             LIMIT 1
           )
@@ -646,6 +663,7 @@ export async function getCompanyBenchmark(
           WHEN 'pd_pct' THEN (
             SELECT g.pd_pct FROM grp g
             WHERE g.pd_pct IS NOT NULL
+              AND g.pd_pct BETWEEN 0 AND 1
             ORDER BY g.pd_pct ASC NULLS LAST
             LIMIT 1
           )
@@ -787,30 +805,35 @@ export async function getCompanyBenchmark(
         WHEN 'equity_ratio' THEN (
           SELECT g.ico FROM grp g
           WHERE g.equity_ratio IS NOT NULL
+          AND g.equity_ratio BETWEEN 0 AND 1
           ORDER BY g.equity_ratio DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'debt_ratio' THEN (
           SELECT g.ico FROM grp g
           WHERE g.debt_ratio IS NOT NULL
+          AND g.debt_ratio BETWEEN 0 AND 1
           ORDER BY g.debt_ratio ASC NULLS LAST
           LIMIT 1
         )
         WHEN 'roa' THEN (
           SELECT g.ico FROM grp g
           WHERE g.roa IS NOT NULL
+          AND ABS(g.roa) <= 5
           ORDER BY g.roa DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'roe' THEN (
           SELECT g.ico FROM grp g
           WHERE g.roe IS NOT NULL
+          AND ABS(g.roe) <= 5
           ORDER BY g.roe DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'net_margin' THEN (
           SELECT g.ico FROM grp g
           WHERE g.net_margin IS NOT NULL
+          AND ABS(g.net_margin) <= 5
           ORDER BY g.net_margin DESC NULLS LAST
           LIMIT 1
         )
@@ -823,6 +846,7 @@ export async function getCompanyBenchmark(
         WHEN 'pd_pct' THEN (
           SELECT g.ico FROM grp g
           WHERE g.pd_pct IS NOT NULL
+          AND g.pd_pct BETWEEN 0 AND 1
           ORDER BY g.pd_pct ASC NULLS LAST
           LIMIT 1
         )
@@ -840,6 +864,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.equity_ratio IS NOT NULL
+          AND g.equity_ratio BETWEEN 0 AND 1
           ORDER BY g.equity_ratio DESC NULLS LAST
           LIMIT 1
         )
@@ -847,6 +872,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.debt_ratio IS NOT NULL
+          AND g.debt_ratio BETWEEN 0 AND 1
           ORDER BY g.debt_ratio ASC NULLS LAST
           LIMIT 1
         )
@@ -854,6 +880,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.roa IS NOT NULL
+          AND ABS(g.roa) <= 5
           ORDER BY g.roa DESC NULLS LAST
           LIMIT 1
         )
@@ -861,6 +888,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.roe IS NOT NULL
+          AND ABS(g.roe) <= 5
           ORDER BY g.roe DESC NULLS LAST
           LIMIT 1
         )
@@ -868,6 +896,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.net_margin IS NOT NULL
+          AND ABS(g.net_margin) <= 5
           ORDER BY g.net_margin DESC NULLS LAST
           LIMIT 1
         )
@@ -882,6 +911,7 @@ export async function getCompanyBenchmark(
           SELECT o.name FROM grp g
           JOIN core.rpo_all_orgs o ON o.ico = g.ico
           WHERE g.pd_pct IS NOT NULL
+          AND g.pd_pct BETWEEN 0 AND 1
           ORDER BY g.pd_pct ASC NULLS LAST
           LIMIT 1
         )
@@ -897,30 +927,35 @@ export async function getCompanyBenchmark(
         WHEN 'equity_ratio' THEN (
           SELECT g.equity_ratio FROM grp g
           WHERE g.equity_ratio IS NOT NULL
+          AND g.equity_ratio BETWEEN 0 AND 1
           ORDER BY g.equity_ratio DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'debt_ratio' THEN (
           SELECT g.debt_ratio FROM grp g
           WHERE g.debt_ratio IS NOT NULL
+          AND g.debt_ratio BETWEEN 0 AND 1
           ORDER BY g.debt_ratio ASC NULLS LAST
           LIMIT 1
         )
         WHEN 'roa' THEN (
           SELECT g.roa FROM grp g
           WHERE g.roa IS NOT NULL
+          AND ABS(g.roa) <= 5
           ORDER BY g.roa DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'roe' THEN (
           SELECT g.roe FROM grp g
           WHERE g.roe IS NOT NULL
+          AND ABS(g.roe) <= 5
           ORDER BY g.roe DESC NULLS LAST
           LIMIT 1
         )
         WHEN 'net_margin' THEN (
           SELECT g.net_margin FROM grp g
           WHERE g.net_margin IS NOT NULL
+          AND ABS(g.net_margin) <= 5
           ORDER BY g.net_margin DESC NULLS LAST
           LIMIT 1
         )
@@ -933,6 +968,7 @@ export async function getCompanyBenchmark(
         WHEN 'pd_pct' THEN (
           SELECT g.pd_pct FROM grp g
           WHERE g.pd_pct IS NOT NULL
+          AND g.pd_pct BETWEEN 0 AND 1
           ORDER BY g.pd_pct ASC NULLS LAST
           LIMIT 1
         )
