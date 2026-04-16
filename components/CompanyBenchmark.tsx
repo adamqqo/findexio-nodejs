@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 type BenchmarkMetricRow = {
@@ -265,7 +266,18 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
                   <td className="py-2">
                     {r.leader_name ? (
                       <div className="text-slate-700 dark:text-slate-300">
-                        <div className="font-medium">{r.leader_name}</div>
+                        <div className="font-medium">
+                          {r.leader_ico ? (
+                            <Link
+                              href={`/company/${encodeURIComponent(r.leader_ico)}`}
+                              className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#51c7e9]/70"
+                            >
+                              {r.leader_name}
+                            </Link>
+                          ) : (
+                            r.leader_name
+                          )}
+                        </div>
                         <div className="text-xs text-slate-600 dark:text-slate-400">
                           {formatMetric(r.metric, r.leader_value)}
                         </div>
