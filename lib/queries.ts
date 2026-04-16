@@ -212,7 +212,7 @@ export async function getCompanyAggregateSeries(
       period_end::text AS period_end,
       revenue,
       net_income,
-      ebit,
+      profit_before_tax as ebit,
       total_assets,
       equity,
       interest_expense
