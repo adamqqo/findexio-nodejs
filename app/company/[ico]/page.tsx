@@ -266,15 +266,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
   // Slovak model (assume 0..1 percentile-like)
   const modelSk = features ? toNum((features as any).model_sk_pct) : null;
 
-  const flags = features
-    ? [
-        { k: 'negative_equity_flag', label: 'Negatívne vlastné imanie', v: features.negative_equity_flag },
-        { k: 'liquidity_breach_flag', label: 'Problém s likviditou', v: features.liquidity_breach_flag },
-        { k: 'high_leverage_flag', label: 'Vysoká zadlženosť', v: features.high_leverage_flag },
-        { k: 'loss_flag', label: 'Strata', v: features.loss_flag }
-      ]
-    : [];
-
   const statusBadge = companyStatusBadge(identity.status);
 
   return (
@@ -295,7 +286,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
 
             <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
               <span className="font-medium text-slate-800 dark:text-slate-200">IČO:</span> <span className="font-mono">{identity.ico}</span>
-              {identity.legal_form_name ? <span> • {identity.legal_form_name}</span> : null}
+              {identity.legal_form_name ? <span> • Sektor: {identity.legal_form_name}</span> : null}
             </div>
 
             {identity.address ? <div className="mt-1 text-sm text-slate-600 dark:text-slate-400">{identity.address}</div> : null}
@@ -635,34 +626,6 @@ export default async function CompanyPage({ params }: { params: Promise<{ ico: s
             <CompanyBenchmark ico={identity.ico} />
           </CollapsibleSection>
         </div>
-      {/* FLAGS (collapsible) */}
-      <div id="flags" className="scroll-mt-24">
-        <CollapsibleSection
-          id="flags-section"
-          title="Diagnostika (flagy)"
-          subtitle="Jednoduché signály z finančných dát"
-          defaultOpen={false}
-        >
-          {features ? (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {flags.map((f) => (
-                <div
-                  key={f.k}
-                  className="flex items-center justify-between rounded-xl border border-slate-900/10 dark:border-white/10 bg-white/70 dark:bg-white/5 px-3 py-2 text-sm"
-                >
-                  <span className="text-slate-800 dark:text-slate-200">{f.label}</span>
-                  <span className={`text-xs font-medium ${f.v ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
-                    {f.v ? 'Áno' : 'Nie'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-700 dark:text-slate-300">Features zatiaľ nie sú dostupné.</p>
-          )}
-        </CollapsibleSection>
-      </div>
-
       <div>
         <Link href="/" className="text-sm text-slate-800 dark:text-slate-200">
           Späť na vyhľadávanie

@@ -21,6 +21,7 @@ type CompanyBenchmarkResult = {
   context: {
     ico: string;
     fiscal_year: number;
+    legal_form_name: string | null;
     nace_division: string | null;
     main_activity_code_id: string | null;
     main_activity_code_name: string | null;
@@ -187,6 +188,11 @@ export default function CompanyBenchmark({ ico }: { ico: string }) {
             {data.benchmark.geo_value} • {data.benchmark.sector_label ?? data.benchmark.sector_value}
           </span>
           <span className="ml-2 text-slate-600 dark:text-slate-400">(n = {data.benchmark.n})</span>
+          {data.context.legal_form_name ? (
+            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Sektor firmy: <span className="font-medium">{data.context.legal_form_name}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex gap-2 text-xs">
