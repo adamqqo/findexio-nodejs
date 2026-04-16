@@ -261,6 +261,7 @@ export async function getCompanyPdSeries(ico: string): Promise<PdRow[]> {
 export type BenchmarkContext = {
   ico: string;
   fiscal_year: number;
+  legal_form_name: string | null;
   nace_division: string | null;
   main_activity_code_id: string | null;
   main_activity_code_name: string | null;
@@ -305,12 +306,14 @@ export async function getCompanyBenchmarkContext(ico: string): Promise<Benchmark
     SELECT
       f.ico,
       f.fiscal_year,
+      org.legal_form_name,
       f.nace_division,
       f.main_activity_code_id,
       f.main_activity_code_name,
       f.kraj,
       f.okres
     FROM core.mv_company_benchmark_facts f
+    LEFT JOIN core.rpo_all_orgs org ON org.ico = f.ico
     WHERE f.ico = ANY($1::text[])
     ORDER BY f.fiscal_year DESC
     LIMIT 1

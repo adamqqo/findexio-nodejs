@@ -33,12 +33,6 @@ export default function Header() {
           >
             GitHub
           </a>
-          <a
-            href="/api/health"
-            className="no-underline rounded-full border border-slate-900/15 bg-slate-900/5 px-3 py-2 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-700 transition hover:border-[#51c7e9]/60 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:text-white"
-          >
-            API Health
-          </a>
         </nav>
       </div>
     </header>
