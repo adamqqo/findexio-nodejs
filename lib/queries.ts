@@ -339,9 +339,16 @@ export async function getCompanyBenchmark(
   const fiscalYear = opts?.fiscalYear ?? ctx.fiscal_year;
   let geoLevel = opts?.geoLevel ?? 'kraj';
 
-  // Prefer requested sector granularity but gracefully fallback for companies
-  // where `nace_division` is missing in benchmark facts.
-  let sectorLevel = opts?.sectorLevel ?? 'nace_division';
+  // Prefer the more descriptive main activity code when available,
+  // but gracefully fallback based on data availability.
+  let sectorLevel =
+    opts?.sectorLevel ??
+    (ctx.main_activity_code_id ? 'main_activity_code_id' : 'nace_division');
+
+  if (sectorLevel === 'main_activity_code_id' && !ctx.main_activity_code_id && ctx.nace_division) {
+    sectorLevel = 'nace_division';
+  }
+
   if (sectorLevel === 'nace_division' && !ctx.nace_division && ctx.main_activity_code_id) {
     sectorLevel = 'main_activity_code_id';
   }
